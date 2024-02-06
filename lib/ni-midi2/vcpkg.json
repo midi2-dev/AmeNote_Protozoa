@@ -1,7 +1,0 @@
-{
-  "name": "ni-midi2",
-  "version-string": "1.0.0",
-  "dependencies": [
-    "gtest"
-  ]
-}
