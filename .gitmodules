@@ -1,0 +1,12 @@
+[submodule "lib/FreeRTOS-Kernel"]
+	path = lib/FreeRTOS-Kernel
+	url = git@github.com:FreeRTOS/FreeRTOS-Kernel.git
+[submodule "lib/ni-midi2"]
+	path = lib/ni-midi2
+	url = git@github.com:midi2-dev/ni-midi2.git
+[submodule "lib/AM_MIDI2.0Lib"]
+	path = lib/AM_MIDI2.0Lib
+	url = git@github.com:midi2-dev/AM_MIDI2.0Lib.git
+[submodule "lib/tusb_ump"]
+	path = lib/tusb_ump
+	url = git@github.com:midi2-dev/tusb_ump.git
