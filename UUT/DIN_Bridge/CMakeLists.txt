@@ -38,7 +38,7 @@ target_link_libraries(UUT_DIN_BRIDGE
         hardware_spi
         hardware_flash
         hardware_dma
-        midi2
+        libmidi2
 )
 
 # pico_enable_stdio_usb(ProtoZOA_UUT 1)

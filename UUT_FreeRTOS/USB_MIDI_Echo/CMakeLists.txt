@@ -47,7 +47,7 @@ target_link_libraries(UUT_USB_MIDI_ECHO
         hardware_dma
         FreeRTOS-Kernel
         FreeRTOS-Kernel-Heap1
-        midi2
+        libmidi2
 )
 
 # pico_enable_stdio_usb(ProtoZOA_UUT 1)

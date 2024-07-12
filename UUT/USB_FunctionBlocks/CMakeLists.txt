@@ -38,7 +38,7 @@ target_link_libraries(UUT_USB_FB
         hardware_spi
         hardware_flash
         hardware_dma
-        midi2
+        libmidi2
 )
 
 

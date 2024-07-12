@@ -89,7 +89,6 @@ target_include_directories(UUT_FREERTOS_TASKS PUBLIC
         ../../Common
         ../../Common/include
         ../../lib/tusb_ump
-        ../../lib/AM_MIDI2.0Lib
         )
 
 pico_generate_pio_header(UUT_FREERTOS_TASKS ${CMAKE_CURRENT_LIST_DIR}/../../Common/pio_serial/uart_rx.pio)
@@ -111,7 +110,6 @@ target_link_libraries(UUT_FREERTOS_TASKS
         hardware_dma
         FreeRTOS-Kernel
         FreeRTOS-Kernel-Heap1
-        midi2
         ni-midi2
 )
 
