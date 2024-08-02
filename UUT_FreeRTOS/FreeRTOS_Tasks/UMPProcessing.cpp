@@ -384,7 +384,7 @@ void UMPProcessing::processMIDICIMessage(const midi::capability_inquiry_view& ms
         {
             printf("sendSysex(make_discovery_reply)\n");
             sendSysex(make_discovery_reply(
-                m_muid, di->source_muid(), my_identity, category::property_exchange, maxSysexMessageSize, di->output_path_id()));
+                m_muid, di->source_muid(), my_identity, category::property_exchange, maxSysexMessageSize, di->output_path_id(), 0));
         
             return;
         }
