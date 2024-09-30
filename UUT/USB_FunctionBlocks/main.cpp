@@ -188,8 +188,8 @@ void functionblock(uint8_t fbIdx, uint8_t filter){
         }
         if(fbIdx==2 || fbIdx==0xFF){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
-                    3, true, 3, false, true, fbStartGroup[2], 1,  0x00,
-                    2,0);
+                    2, true, 3, false, true, fbStartGroup[2], 1,  0x00,
+                    3,0);
             tud_ump_write(0,UMP.data(),4);
         }
     }
