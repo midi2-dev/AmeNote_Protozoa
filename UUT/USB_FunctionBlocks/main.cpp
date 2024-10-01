@@ -176,19 +176,19 @@ void functionblock(uint8_t fbIdx, uint8_t filter){
     if(filter & 0x1){
         if(fbIdx==0 || fbIdx==0xFF){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
-                    1, true, 3, false, true, fbStartGroup[0], 2, 0x00,
+                    0, true, 3, false, true, fbStartGroup[0], 2, 0x00,
                     0,0);
             tud_ump_write(0,UMP.data(),4);
         }
         if(fbIdx==1 || fbIdx==0xFF){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
-                    2, true, 3, false, true,fbStartGroup[1], 1,  0x00,
+                    1, true, 3, false, true,fbStartGroup[1], 1,  0x00,
                     1,0);
             tud_ump_write(0,UMP.data(),4);
         }
         if(fbIdx==2 || fbIdx==0xFF){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
-                    3, true, 3, false, true, fbStartGroup[2], 1,  0x00,
+                    2, true, 3, false, true, fbStartGroup[2], 1,  0x00,
                     1,0);
             tud_ump_write(0,UMP.data(),4);
         }
@@ -197,17 +197,17 @@ void functionblock(uint8_t fbIdx, uint8_t filter){
     if(filter & 0x2) {
         if(fbIdx==0 || fbIdx==0xFF) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockNameNotify(
-                    1, 0, (uint8_t *) "FB 1", 4);
+                    0, 0, (uint8_t *) "FB 1", 4);
             tud_ump_write(0,UMP.data(),4);
         }
         if(fbIdx==1 || fbIdx==0xFF) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockNameNotify(
-                    2, 0, (uint8_t *) "FB 2", 4);
+                    1, 0, (uint8_t *) "FB 2", 4);
             tud_ump_write(0,UMP.data(),4);
         }
         if(fbIdx==2 || fbIdx==0xFF) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockNameNotify(
-                    3, 0, (uint8_t *) "FB 3", 4);
+                    2, 0, (uint8_t *) "FB 3", 4);
             tud_ump_write(0,UMP.data(),4);
         }
     }
