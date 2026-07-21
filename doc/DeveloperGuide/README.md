@@ -8,13 +8,27 @@
 
 ## Developing on Raspberry Pi Pico
 
-There are several resources in regards to developing on the Raspberry Pi Pico. To setup your development environment, see the documentation supplied by Raspberry for the Pico [here](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html).
+This project targets **Pico SDK 2.3.0** with **ARM GNU Toolchain 15_2_Rel1**. There are two supported ways to set up your development environment:
 
-A really good resource is a series of documents and videos through [Digikey](https://www.digikey.ca/en/maker/projects/raspberry-pi-pico-and-rp2040-cc-part-1-blink-and-vs-code/7102fb8bca95452e9df6150f39ae8422).
+### Option A: VS Code (recommended for most contributors)
 
-There is also a good video from [Gary Explains](https://www.youtube.com/watch?v=NCaL6tXAF0c)
+1. Install [VS Code](https://code.visualstudio.com/) and the official [Raspberry Pi Pico VS Code extension](https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico).
+2. Open this repository's folder in VS Code. Use the extension's "Import Project" / SDK version picker to install SDK 2.3.0 and toolchain 15_2_Rel1 if you don't already have them (it installs them under `~/.pico-sdk`, not system-wide).
+3. Use the extension's Compile / Run / Debug commands as normal. The top-level `CMakeLists.txt` has a header block (`# == DO NOT EDIT ... ==`) that the extension reads to auto-locate the right SDK/toolchain/picotool versions -- leave that block alone.
 
-Please use these resources to become familiar with development on Raspberry Pico plus also in configuring your development environment.
+### Option B: CLI or another IDE (CLion, etc.)
+
+1. Install the [Pico SDK](https://github.com/raspberrypi/pico-sdk) (tag `2.3.0`) and [ARM GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) `15.2.Rel1` yourself, anywhere on disk.
+2. Set `PICO_SDK_PATH` to your SDK checkout, and `PICO_TOOLCHAIN_PATH` to your toolchain install (unless its `bin/` is already on `PATH`).
+3. **Install CMake 4.x.** This is a hard requirement, not just a suggestion: SDK 2.3.0's linker-script system uses a `target_link_options(... "LINKER:-L...")` mechanism that CMake 3.x (including current Homebrew/apt-packaged CMake as of this writing) fails to translate correctly for `copy_to_ram` binaries -- `ProtoZOA_Main` and `picoprobe` will fail to link with `cannot open linker script file section_platform_end.incl` on CMake 3.x. If you don't want to touch your system CMake, download the [CMake 4.3.4 release](https://github.com/Kitware/CMake/releases/tag/v4.3.4) tarball and point directly at that binary.
+4. From the repo root:
+   ```
+   cmake --preset release
+   cmake --build --preset release
+   ```
+   See [CMakePresets.json](../../CMakePresets.json) for the available presets.
+
+Raspberry Pi's own [Pico documentation](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html) and [C/C++ SDK guide](https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf) are good general background reading, independent of the ProtoZOA-specific steps above.
 
 ## About the Code
 The ProtoZOA code is currently available in a private MIDI Association repository. Eventually the code will be made public as indicated in the license and contribution agreement.
@@ -28,13 +42,17 @@ The ProtoZOA code base is C / C++. There are many resources available online if 
 ### Getting the Code
 The best way to get the code is to clone the repository to your local development machine. With git installed, you can go to your Pico directory (same place as pico-sdk directory) and exeucte the following command:
 
-> git clone https://github.com/midi2-dev/Amenote_Protozoa.git --recursive
+> git clone git@github.com:midi2-dev/AmeNote_Protozoa.git --recursive
+
+**Note:** this project's submodules (`lib/FreeRTOS-Kernel`, `lib/ni-midi2`, `lib/AM_MIDI2.0Lib`, `lib/tusb_ump`, `lib/CMSIS_5`) are all fetched over SSH (`git@github.com:...`), so you need an SSH key [added to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh) before cloning -- an HTTPS clone of the main repo will still fail to fetch submodules without one.
 
 The --recursive command will ensure all submodules are also fetched into your local repository. If you did not fetch repository with the recursive command, you can change directory into your local repository and execute the following commands:
 
 > git submodule init
 
 > git submodule update --recursive
+
+`lib/CMSIS_5` is only used for the CMSIS-DAP debug-probe firmware (`ProtoZOA_Main` and `ProtoZOA_PicoProbe` pull in `CMSIS/DAP/Firmware/{Source,Include}` and `CMSIS/Core/Include` directly) -- it's pinned to upstream tag `5.9.0`, not the full CMSIS_5 feature set.
 
 ### Contributing
 
