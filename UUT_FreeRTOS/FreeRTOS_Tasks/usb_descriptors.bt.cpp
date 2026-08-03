@@ -542,7 +542,7 @@ static midi2_cs_interface_desc_group_terminal_blocks_n_t(3) group_terminal_block
 {
   .header = {
     .bLength             = 5,
-    .bDescriptorType     = MIDI_CS_INTERFACE_GR_TRM_BLOCK,
+    .bDescriptorType     = MIDI_1_CS_INTERFACE_GR_TRM_BLOCK,
     .bDescriptorSubType  = MIDI_GR_TRM_BLOCK_HEADER,
     .wTotalLength        = sizeof(group_terminal_blocks_descr)
   },
@@ -550,7 +550,7 @@ static midi2_cs_interface_desc_group_terminal_blocks_n_t(3) group_terminal_block
     // Main Function Block
     {
       .bLength             = 13,
-      .bDescriptorType     = MIDI_CS_INTERFACE_GR_TRM_BLOCK,
+      .bDescriptorType     = MIDI_1_CS_INTERFACE_GR_TRM_BLOCK,
       .bDescriptorSubType  = MIDI_GR_TRM_BLOCK,
       .bGrpTrmBlkID        = MIDI2GrpTrmMain,
       .bGrpTrmBlkType      = 0x00,   // bi-directional
@@ -564,7 +564,7 @@ static midi2_cs_interface_desc_group_terminal_blocks_n_t(3) group_terminal_block
     // 5-PIN DIN Ports Function Block
     {
       .bLength             = 13,
-      .bDescriptorType     = MIDI_CS_INTERFACE_GR_TRM_BLOCK,
+      .bDescriptorType     = MIDI_1_CS_INTERFACE_GR_TRM_BLOCK,
       .bDescriptorSubType  = MIDI_GR_TRM_BLOCK,
       .bGrpTrmBlkID        = MIDI2GrpTrmDIN,
       .bGrpTrmBlkType      = 0x00,   // bi-directional
@@ -578,7 +578,7 @@ static midi2_cs_interface_desc_group_terminal_blocks_n_t(3) group_terminal_block
     // CME Widi Function Block
     {
       .bLength             = 13,
-      .bDescriptorType     = MIDI_CS_INTERFACE_GR_TRM_BLOCK,
+      .bDescriptorType     = MIDI_1_CS_INTERFACE_GR_TRM_BLOCK,
       .bDescriptorSubType  = MIDI_GR_TRM_BLOCK,
       .bGrpTrmBlkID        = MIDI2GrpTrmWidi,
       .bGrpTrmBlkType      = 0x00,   // bi-directional
