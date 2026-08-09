@@ -13,7 +13,7 @@ static void sendPacket(const midi::universal_packet &p)
 {
     TRACE_OUTGOING_PACKET("USB MIDI Out", p); 
 
-    tud_ump_write(0, (uint32_t*)p.data, p.size());
+    tud_ump_write_hton(0, (uint32_t*)p.data, p.size());
 }
 
 static UMPProcessing USBMIDI("ProtoZOA USB MIDI", sendPacket);
@@ -38,7 +38,7 @@ extern "C" void pvrUSBMIDI(void *pvParameters)
             {
                 constexpr uint16_t maxUMPWords = 32;
                 uint32_t wordBuffer[maxUMPWords];
-                uint32_t wordCount = tud_ump_read(0, wordBuffer, maxUMPWords);
+                uint32_t wordCount = tud_ump_read_ntoh(0, wordBuffer, maxUMPWords);
                 for (uint32_t w = 0; w < wordCount; ++w)
                 {
                     if (numMissingWords == 0)

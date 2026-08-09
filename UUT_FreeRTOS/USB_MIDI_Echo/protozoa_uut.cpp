@@ -46,7 +46,7 @@ int ProtoZOA_main() {
             uint32_t umpCount;
             if (ump_n_available) {
                 uint8_t mVersion = tud_alt_setting(0) +1 ;
-                if ((umpCount = tud_ump_read(0, UMPpacket, 4))) {
+                if ((umpCount = tud_ump_read_ntoh(0, UMPpacket, 4))) {
                     switch (umpCount) {
                         case 1:
                             printf("MIDI %d UMP 0x%08x \n", mVersion, UMPpacket[0]);
@@ -62,7 +62,7 @@ int ProtoZOA_main() {
                             break;
                     }
 
-                    tud_ump_write(0, UMPpacket, umpCount);
+                    tud_ump_write_hton(0, UMPpacket, umpCount);
 
                 }
             }

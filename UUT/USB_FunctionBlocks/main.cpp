@@ -94,7 +94,7 @@ int main() {
             uint32_t umpCount;
             if (ump_n_available) {
                 uint8_t mVersion = tud_alt_setting(0) +1 ;
-                if ((umpCount = tud_ump_read(0, UMPpacket, 4))) {
+                if ((umpCount = tud_ump_read_ntoh(0, UMPpacket, 4))) {
                     switch (umpCount) {
                         case 1:
                             printf("MIDI %d UMP 0x%08x \n", mVersion, UMPpacket[0]);
@@ -134,13 +134,13 @@ void midiendpoint(uint8_t majVer, uint8_t minVer, uint8_t filter){
     if(filter & 0x1){
         std::array<uint32_t, 4> UMP = UMPMessage::mtFMidiEndpointInfoNotify(
                 3, false, true, false, false);
-        tud_ump_write(0,UMP.data(),4);
+        tud_ump_write_hton(0,UMP.data(),4);
     }
 
     if(filter & 0x2){
         std::array<uint32_t, 4> UMP = UMPMessage::mtFMidiEndpointDeviceInfoNotify(
                 {DEVICE_MFRID}, {DEVICE_FAMID}, {DEVICE_MODELID}, {DEVICE_VERSIONID});
-        tud_ump_write(0,UMP.data(),4);
+        tud_ump_write_hton(0,UMP.data(),4);
 
     }
 
@@ -150,7 +150,7 @@ void midiendpoint(uint8_t majVer, uint8_t minVer, uint8_t filter){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFMidiEndpointTextNotify(
                     MIDIENDPOINT_NAME_NOTIFICATION, offset, (uint8_t *) DEVICE_MIDIENPOINTNAME,
                     friendlyNameLength);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
     }
     if(filter & 0x4) {
@@ -163,7 +163,7 @@ void midiendpoint(uint8_t majVer, uint8_t minVer, uint8_t filter){
         for(uint8_t offset=0; offset<len; offset+=14) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFMidiEndpointTextNotify(
                     MIDIENDPOINT_PRODID_NOTIFICATION, offset, (uint8_t *) buff,len);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
     }
 }
@@ -178,19 +178,19 @@ void functionblock(uint8_t fbIdx, uint8_t filter){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
                     0, true, 3, false, true, fbStartGroup[0], 2, 0x00,
                     0,0);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
         if(fbIdx==1 || fbIdx==0xFF){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
                     1, true, 3, false, true,fbStartGroup[1], 1,  0x00,
                     1,0);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
         if(fbIdx==2 || fbIdx==0xFF){
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
                     2, true, 3, false, true, fbStartGroup[2], 1,  0x00,
                     1,0);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
     }
 
@@ -198,17 +198,17 @@ void functionblock(uint8_t fbIdx, uint8_t filter){
         if(fbIdx==0 || fbIdx==0xFF) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockNameNotify(
                     0, 0, (uint8_t *) "FB 1", 4);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
         if(fbIdx==1 || fbIdx==0xFF) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockNameNotify(
                     1, 0, (uint8_t *) "FB 2", 4);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
         if(fbIdx==2 || fbIdx==0xFF) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockNameNotify(
                     2, 0, (uint8_t *) "FB 3", 4);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
         }
     }
 }
@@ -221,7 +221,7 @@ void buttonDown(uint8_t button) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
                     1, true, 3, false, true, fbStartGroup[0], 2, 0x00,
                     0, 0);
-            tud_ump_write(0, UMP.data(), 4);
+            tud_ump_write_hton(0, UMP.data(), 4);
             break;
         }
         case CAP2:{
@@ -229,7 +229,7 @@ void buttonDown(uint8_t button) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
                     1, true, 3, false, true, fbStartGroup[0], 2, 0x00,
                     0, 0);
-            tud_ump_write(0, UMP.data(), 4);
+            tud_ump_write_hton(0, UMP.data(), 4);
             break;
         }
         case CAP3:{
@@ -237,7 +237,7 @@ void buttonDown(uint8_t button) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
                     2, true, 3, false, true,fbStartGroup[1], 1,  0x00,
                     1,0);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
             break;
         }
         case CAP4:{
@@ -245,7 +245,7 @@ void buttonDown(uint8_t button) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFFunctionBlockInfoNotify(
                     2, true, 3, false, true,fbStartGroup[1], 1,  0x00,
                     1,0);
-            tud_ump_write(0,UMP.data(),4);
+            tud_ump_write_hton(0,UMP.data(),4);
             break;
         }
         case CAP5:
@@ -254,7 +254,7 @@ void buttonDown(uint8_t button) {
             uint32_t ump = UMPMessage::mt2NoteOn(0,0,60+button,100);
             if (tud_ump_n_mounted(0))
             {
-                tud_ump_write(0, &ump, 1);
+                tud_ump_write_hton(0, &ump, 1);
             }
             break;
     }
@@ -274,7 +274,7 @@ void buttonUp(uint8_t button) {
             uint32_t ump = UMPMessage::mt2NoteOff(0,0,60+button,100);
             if (tud_ump_n_mounted(0))
             {
-                tud_ump_write(0, &ump, 1);
+                tud_ump_write_hton(0, &ump, 1);
             }
             break;
     }
@@ -290,7 +290,7 @@ void analog(uint8_t pot, uint16_t value) {
     uint32_t ump = UMPMessage::mt2CC(0, 0, pot==POT1?7:11, value >> 5);
     if (tud_ump_n_mounted(0))
     {
-        tud_ump_write(0, &ump, 1);
+        tud_ump_write_hton(0, &ump, 1);
     }
 }
 
@@ -304,15 +304,15 @@ void sendOutSysex(uint8_t group, uint8_t *sysex ,uint16_t length, uint8_t state)
         sx[sxPos++]=sysex[i] & 0x7F;
         if(sxPos == 6){
             std::array<uint32_t, 2> UMP = UMPMessage::mt3Sysex7(group, state < 2 && i < 6 ? 1 : 2, 6, sx);
-            tud_ump_write(0,UMP.data(),2);
+            tud_ump_write_hton(0,UMP.data(),2);
             sxPos=0;
         }
     }
     if (state == 0 || state == 3) {
 //        uint32_t UMPF8 = UMPMessage::mt1TimingClock(group);
-//        tud_ump_write(0,&UMPF8,1);
+//        tud_ump_write_hton(0,&UMPF8,1);
         std::array<uint32_t, 2> UMP = UMPMessage::mt3Sysex7(group, length < 7 && state==0 ? 0 : 3, sxPos, sx);
-        tud_ump_write(0,UMP.data(),2);
+        tud_ump_write_hton(0,UMP.data(),2);
     }
 }
 
