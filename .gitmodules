@@ -13,3 +13,9 @@
 [submodule "lib/CMSIS_5"]
 	path = lib/CMSIS_5
 	url = git@github.com:ARM-software/CMSIS_5.git
+[submodule "lib/NetworkMIDI2"]
+	path = lib/NetworkMIDI2
+	url = git@github.com:midi2-dev/NetworkMIDI2.git
+[submodule "lib/RP2040-HAT-LWIP-C"]
+	path = lib/RP2040-HAT-LWIP-C
+	url = git@github.com:Wiznet/RP2040-HAT-LWIP-C.git
