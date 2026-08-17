@@ -14,6 +14,12 @@ set(WIZNET_CHIP W5500)
 set(WIZNET_DIR ${CMAKE_CURRENT_LIST_DIR}/../../lib/RP2040-HAT-LWIP-C/libraries/ioLibrary_Driver)
 set(WIZNET_PORT_DIR ${CMAKE_CURRENT_LIST_DIR}/wiznet_port)
 
+# PROTOZOA (default): ProtoZOA UUT J13 expansion pins (see wiznet_port/w5x00_spi.h).
+# W5500_EVB_PICO: WIZnet's own W5500-EVB-Pico eval board instead, to isolate a
+# software bug from a ProtoZOA-specific wiring/hardware issue.
+set(NM2_WIZNET_BOARD "PROTOZOA" CACHE STRING "Wiznet SPI pin set: PROTOZOA or W5500_EVB_PICO")
+set_property(CACHE NM2_WIZNET_BOARD PROPERTY STRINGS PROTOZOA W5500_EVB_PICO)
+
 add_library(NM2BRIDGE_WIZNET_ETHERNET STATIC)
 target_sources(NM2BRIDGE_WIZNET_ETHERNET PUBLIC
         ${WIZNET_DIR}/Ethernet/socket.c
@@ -37,6 +43,9 @@ target_include_directories(NM2BRIDGE_WIZNET_PORT PUBLIC
         ${WIZNET_PORT_DIR}
         ${WIZNET_DIR}/Ethernet
         )
+if(NM2_WIZNET_BOARD STREQUAL "W5500_EVB_PICO")
+    target_compile_definitions(NM2BRIDGE_WIZNET_PORT PUBLIC NM2_WIZNET_BOARD_W5500_EVB_PICO=1)
+endif()
 target_link_libraries(NM2BRIDGE_WIZNET_PORT PUBLIC
         NM2BRIDGE_WIZNET_ETHERNET
         pico_stdlib

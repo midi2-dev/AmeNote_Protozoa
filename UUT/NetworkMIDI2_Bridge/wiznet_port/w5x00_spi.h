@@ -20,25 +20,41 @@ extern "C" {
  * ProtoZOA UUT Pico wiring for a Wiznet W5x00 Ethernet expansion board on
  * the J13 expansion header. spi0 (GPIO4/6/7) is already committed to the
  * Main<->UUT high-speed link (see J10/J11/J12 in the schematic), so this
- * uses spi1.
+ * uses spi1 (RP2040 SPI1 alt-function pins for CS/SCK/MOSI/MISO).
  *
- * TODO CONFIRM: these GPIO numbers are a best-effort reading of
- * doc/Resources/ProtoZOA -- Schematic...pdf (sheet 3, "UUT and Expansion",
- * connector J13 -- net names XPNSN_SPI_TX/XPNSN_SPI_CLK/XPNSN_SPI_RX and
- * spare pins XPNSN_PIN_A/XPNSN_PIN_B). PDF text extraction could not fully
- * disambiguate the exact GPIO numbers backing the XPNSN_SPI_* nets from
- * OCR'd text alone -- verify against the KiCad source
- * (UUT and Expansion/Sheet_03.kicad_sch) or a continuity check before
- * first flash. GPIO26/27/28 are RP2040's SPI1 alt-function pins for
- * SCK/TX/RX respectively, which is what these are assumed to map to.
+ * Confirmed (hardware-tested) RP2040 -> Wiznet mapping:
+ *   GPIO9  -> SPI_CS_N
+ *   GPIO10 -> SPI_SCK
+ *   GPIO11 -> SPI_MOSI
+ *   GPIO8  -> SPI_MISO (schematic net label read as GPIO12; GPIO8 is what
+ *             actually works on real hardware -- see git history)
+ *   GPIO3  -> W5500_RST_N
+ *   GPIO15 -> W5500_INT_N (not currently used; driver is polling-based)
+ *
+ * NM2_WIZNET_BOARD_W5500_EVB_PICO (set via the NM2_WIZNET_BOARD CMake cache
+ * variable): builds instead for WIZnet's own W5500-EVB-Pico eval board,
+ * whose onboard W5500 is fixed-wired to spi0 on these pins (from WIZnet's
+ * own RP2040-HAT-LWIP-C reference example). Used to isolate a software bug
+ * from a ProtoZOA-specific wiring/hardware issue -- same driver code, a
+ * known-good board.
  */
+#if defined(NM2_WIZNET_BOARD_W5500_EVB_PICO)
+#define SPI_PORT spi0
+
+#define PIN_SCK 18
+#define PIN_MOSI 19
+#define PIN_MISO 16
+#define PIN_CS 17
+#define PIN_RST 20
+#else
 #define SPI_PORT spi1
 
-#define PIN_SCK 26  /* XPNSN_SPI_CLK -- TODO CONFIRM */
-#define PIN_MOSI 27 /* XPNSN_SPI_TX  -- TODO CONFIRM */
-#define PIN_MISO 28 /* XPNSN_SPI_RX  -- TODO CONFIRM */
-#define PIN_CS 17   /* XPNSN_PIN_A / UUT_GPIO_17 -- TODO CONFIRM */
-#define PIN_RST 18  /* XPNSN_PIN_B / UUT_GPIO_18 -- TODO CONFIRM */
+#define PIN_SCK 10  /* SPI_SCK */
+#define PIN_MOSI 11 /* SPI_MOSI */
+#define PIN_MISO 8  /* SPI_MISO */
+#define PIN_CS 9    /* SPI_CS_N */
+#define PIN_RST 3   /* W5500_RST_N */
+#endif
 
 /* Use SPI DMA */
 //#define USE_SPI_DMA // if you want to use SPI DMA, uncomment.

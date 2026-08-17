@@ -137,7 +137,7 @@ static void wizchip_critical_section_unlock(void)
 void wizchip_spi_initialize(void)
 {
     // this example will use SPI0 at 5MHz
-    spi_init(SPI_PORT, 5000 * 1000);
+    spi_init(SPI_PORT, 20000 * 1000);
 
     gpio_set_function(PIN_SCK, GPIO_FUNC_SPI);
     gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
@@ -208,8 +208,12 @@ void wizchip_initialize(void)
         return;
     }
 
-    /* Check PHY link status */
-    do
+    /* Check PHY link status. Bounded, not the vendor's original unbounded
+     * spin -- that hangs forever with no cable connected, which makes SPI
+     * bring-up impossible to verify on a bench. Logs and continues either
+     * way; the caller can check CW_GET_PHYLINK again later once a cable is
+     * plugged in. */
+    for (int retries = 0; retries < 20; retries++)
     {
         if (ctlwizchip(CW_GET_PHYLINK, (void *)&temp) == -1)
         {
@@ -217,7 +221,13 @@ void wizchip_initialize(void)
 
             return;
         }
-    } while (temp == PHY_LINK_OFF);
+        if (temp != PHY_LINK_OFF)
+        {
+            return;
+        }
+        sleep_ms(100);
+    }
+    printf(" PHY link is still down after 2s -- continuing without it.\n");
 }
 
 void wizchip_check(void)

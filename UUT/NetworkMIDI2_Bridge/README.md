@@ -4,17 +4,19 @@ Bridges **Network MIDI 2.0** (UDP, via a Wiznet W5500 Ethernet expansion
 board on the UUT J13 expansion header) to **USB MIDI 2.0** (tusb_ump), the
 same way `UUT/DIN_Bridge` bridges a MIDI 1.0 DIN port to USB MIDI 2.0.
 
-## Before first flash: confirm the SPI wiring
+## SPI wiring
 
-`wiznet_port/w5x00_spi.h` defines the SPI + reset pins as a best-effort
-reading of `doc/Resources/ProtoZOA -- Schematic...pdf` (sheet 3, "UUT and
-Expansion", connector J13 — net names `XPNSN_SPI_TX`/`XPNSN_SPI_CLK`/
-`XPNSN_SPI_RX` and spares `XPNSN_PIN_A`/`XPNSN_PIN_B`). PDF text extraction
-could not fully disambiguate the exact GPIO numbers from OCR'd text alone —
-**verify against the KiCad source (`UUT and Expansion/Sheet_03.kicad_sch`)
-or a continuity check before powering up a board**, then update the
-`PIN_SCK` / `PIN_MOSI` / `PIN_MISO` / `PIN_CS` / `PIN_RST` defines in that
-file if they're wrong.
+`wiznet_port/w5x00_spi.h` defines the SPI + reset pins for the Wiznet
+W5x00 expansion board on the UUT J13 expansion header:
+
+| RP2040 GPIO | Wiznet signal |
+|---|---|
+| GPIO9  | SPI_CS_N |
+| GPIO10 | SPI_SCK |
+| GPIO11 | SPI_MOSI |
+| GPIO8  | SPI_MISO |
+| GPIO3  | W5500_RST_N |
+| GPIO15 | W5500_INT_N (not currently wired up; driver is polling-based) |
 
 `wiznet_port/` also assumes a **W5500** chip (set via `WIZNET_CHIP` in
 `CMakeLists.txt`). If your expansion board uses a W5100S instead, change
