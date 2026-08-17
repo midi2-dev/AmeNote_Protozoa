@@ -35,13 +35,38 @@ This git has the following sub directories:
 |:----------|:----------|
 | ProtoZOA_Main    | Code and build for the Main Pico on ProtoZOA - the one soldered onto main board.    |
 | ProtoZOA_PicoProbe    | Code and build for the PicoProbe utility from Raspberry configured for use on ProtoZOA development board. Can be loaded onto either Main or UUT Pico. See [User Manual](doc/UserManual) for more information.    |
-| ProtoZOA_UUT    | Code and build for the UUT (Unit Under Test) Pico on ProtoZOA - the one on connectors.    |
+| UUT    | Code and build for the UUT (Unit Under Test) Pico on ProtoZOA - the one on connectors.    |
+| UUT_FreeRTOS    | UUT variants built on FreeRTOS (e.g. USB MIDI Echo, general FreeRTOS task examples).    |
+| lib    | Dependencies pulled in as git submodules (CMSIS_5, FreeRTOS-Kernel, ni-midi2, AM_MIDI2.0Lib, tusb_ump).    |
 | doc | ProtoZOA support documentation. |
-| CMakeLists.txt | cmake build support file |
+| CMakeLists.txt | Top-level cmake build file. |
+| CMakePresets.json | CLI/CI/IDE-agnostic configure & build presets (`cmake --preset release`). |
 | Contribution.md | Contribution agreement |
 | License.md | License agreement |
 | README.md | This file. |
 | pico_sdk_import.cmake | SDK connection file for Pico development |
+
+## Building
+
+This project targets [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk) **2.3.0** with ARM GNU Toolchain **15_2_Rel1**, and requires **CMake 4.x** (SDK 2.3.0's linker-script system relies on a `target_link_options(... "LINKER:-L...")` mechanism that CMake 3.x fails to translate correctly for `copy_to_ram` binaries such as `ProtoZOA_Main` and `picoprobe` -- you'll see a `cannot open linker script file section_platform_end.incl` link error if you build with CMake < 4).
+
+1. Clone with submodules (submodule URLs are SSH -- make sure you have an SSH key configured for GitHub):
+   ```
+   git clone --recursive git@github.com:midi2-dev/AmeNote_Protozoa.git
+   ```
+   or, if already cloned:
+   ```
+   git submodule update --init --recursive
+   ```
+2. Either:
+   - **VS Code**: install the official [Raspberry Pi Pico VS Code extension](https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico) and use it to install SDK 2.3.0 / toolchain 15_2_Rel1, then open the folder and build via the extension's CMake/Build commands, or
+   - **CLI / other IDEs (CLion, etc.)**: install the Pico SDK and ARM GNU toolchain yourself, set `PICO_SDK_PATH` (and `PICO_TOOLCHAIN_PATH`, unless the toolchain is on `PATH`) in your environment, then:
+     ```
+     cmake --preset release
+     cmake --build --preset release
+     ```
+     See [CMakePresets.json](CMakePresets.json) for the available presets (`release`, `debug`).
+3. See [Developer Guide](doc/DeveloperGuide) for more detail.
 
 ## MIDI Association ([www.midi.org](http://www.midi.org))
 ProtoZOA is part of the offering from the MIDI Association towards their mission for corporate members to:

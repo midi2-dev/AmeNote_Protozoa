@@ -10,3 +10,6 @@
 [submodule "lib/tusb_ump"]
 	path = lib/tusb_ump
 	url = git@github.com:midi2-dev/tusb_ump.git
+[submodule "lib/CMSIS_5"]
+	path = lib/CMSIS_5
+	url = git@github.com:ARM-software/CMSIS_5.git

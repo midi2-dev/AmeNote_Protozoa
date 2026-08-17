@@ -444,7 +444,7 @@ static midi2_cs_interface_desc_group_terminal_blocks_n_t(2) group_terminal_block
 {
   .header = {
     .bLength             = 5,
-    .bDescriptorType     = MIDI_CS_INTERFACE_GR_TRM_BLOCK,
+    .bDescriptorType     = MIDI_1_CS_INTERFACE_GR_TRM_BLOCK,
     .bDescriptorSubType  = MIDI_GR_TRM_BLOCK_HEADER,
     .wTotalLength        = sizeof(group_terminal_blocks_desc)
   },
@@ -452,7 +452,7 @@ static midi2_cs_interface_desc_group_terminal_blocks_n_t(2) group_terminal_block
     // 5-PIN DIN In Function Block
     {
       .bLength             = 13,
-      .bDescriptorType     = MIDI_CS_INTERFACE_GR_TRM_BLOCK,
+      .bDescriptorType     = MIDI_1_CS_INTERFACE_GR_TRM_BLOCK,
       .bDescriptorSubType  = MIDI_GR_TRM_BLOCK,
       .bGrpTrmBlkID        = 1,
       .bGrpTrmBlkType      = 0x02,   // OUT Group Terminals only
@@ -466,7 +466,7 @@ static midi2_cs_interface_desc_group_terminal_blocks_n_t(2) group_terminal_block
     // 5-PIN DIN Out Function Block
     {
       .bLength             = 13,
-      .bDescriptorType     = MIDI_CS_INTERFACE_GR_TRM_BLOCK,
+      .bDescriptorType     = MIDI_1_CS_INTERFACE_GR_TRM_BLOCK,
       .bDescriptorSubType  = MIDI_GR_TRM_BLOCK,
       .bGrpTrmBlkID        = 2,
       .bGrpTrmBlkType      = 0x01,   // IN Group Terminals only
