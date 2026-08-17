@@ -63,6 +63,7 @@ add_subdirectory(UUT/DIN_Bridge)
 add_subdirectory(UUT/CME_WIDI_CORE_EXP)
 add_subdirectory(UUT/USB_FunctionBlocks)
 add_subdirectory(UUT/CDC_FunctionBlocks)
+add_subdirectory(UUT/NetworkMIDI2_Bridge)
 
 set(NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR ON CACHE BOOL "Build with custom sysex data allocator" FORCE)
 add_subdirectory(lib/ni-midi2)

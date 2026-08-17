@@ -87,7 +87,7 @@ Availability for non-commercial MIDI Association members is anticipated to occur
 AmeNote (and others) will be releasing additional expansion accessories for use with ProtoZOA from time to time. Currently in development or externally availabe are:
 - LCD Display Module with joystick and funciton buttons (see User Guide for more info)
 - CME WIDI Core Bluetooth module ([www.cme-pro.com](https://www.cme-pro.com/))
-- AmeNote ProtoZOA PoE Ethernet Expansion Module (estimated late August, 2022).
+- AmeNote ProtoZOA PoE Ethernet Expansion Module -- available now, with Network MIDI 2.0 support via [`UUT/NetworkMIDI2_Bridge`](UUT/NetworkMIDI2_Bridge), bridging a Wiznet W5500 Ethernet expansion board to USB MIDI 2.0.
 - Type 25 Expansion Module (tbd)
 - External Power Supply - see User Manual for more details.
 - Micro-USB to USB A (host) Adapter - see User Manual for more details.
