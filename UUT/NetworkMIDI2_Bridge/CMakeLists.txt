@@ -58,8 +58,22 @@ target_link_libraries(NM2BRIDGE_WIZNET_PORT PUBLIC
 
 # lwipopts.h must be visible to every pico_lwip consumer (WIZnet port code
 # and NetworkMIDI2's LwipUdpTransport both build against the same lwIP
-# config). No other target in this project uses pico_lwip, so extending its
-# INTERFACE include path here is safe.
+# config). pico_lwip is a build-global CMake target, so this line affects
+# every target in the whole build that links pico_lwip, not just this UUT --
+# today that's only this one, but if a second UUT ever also links pico_lwip
+# with a *different* lwipopts.h, this would silently pick whichever
+# CMakeLists.txt happened to run last. Guard against that with a loud
+# configure-time error instead of a silent misconfiguration.
+get_property(_pico_lwip_opts_owner GLOBAL PROPERTY PICO_LWIP_OPTS_DIR_OWNER)
+if(_pico_lwip_opts_owner AND NOT _pico_lwip_opts_owner STREQUAL CMAKE_CURRENT_LIST_DIR)
+    message(FATAL_ERROR
+            "pico_lwip's INTERFACE include directories were already set by "
+            "${_pico_lwip_opts_owner} (a different lwipopts.h). pico_lwip is "
+            "a single build-global target and cannot serve two conflicting "
+            "lwIP configs -- give one of these targets its own pico_lwip-alike "
+            "target instead of sharing the SDK one.")
+endif()
+set_property(GLOBAL PROPERTY PICO_LWIP_OPTS_DIR_OWNER ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(pico_lwip INTERFACE ${WIZNET_PORT_DIR})
 
 # ---------------------------------------------------------------------------

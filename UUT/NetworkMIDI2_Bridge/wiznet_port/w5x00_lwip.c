@@ -18,6 +18,8 @@
 
 #include "netif/etharp.h"
 
+#include "pico/time.h"
+
 /**
  * ----------------------------------------------------------------------------------------------------
  * Macros
@@ -36,8 +38,14 @@
 // pulls a unique ID via pico_unique_id for USB.
 uint8_t mac[6] = {0x02, 0x50, 0x5A, 0x4E, 0x4D, 0x32}; // "PZ" "NM2"
 
-static uint8_t tx_frame[1542];
-static const uint32_t ethernet_polynomial_le = 0xedb88320U;
+static uint8_t tx_frame[ETHERNET_FRAME_MAX_SIZE];
+
+// Bound on how long send_lwip() will wait for the W5500 to accept/complete a
+// send before giving up. The vendor's original code spun on these same
+// conditions unbounded, which can hang this project's single-threaded
+// NO_SYS main loop forever if the link drops mid-send (no RTOS/watchdog to
+// recover it).
+#define SEND_WAIT_TIMEOUT_MS 100
 
 /**
  * ----------------------------------------------------------------------------------------------------
@@ -46,10 +54,7 @@ static const uint32_t ethernet_polynomial_le = 0xedb88320U;
  */
 int32_t send_lwip(uint8_t sn, uint8_t *buf, uint16_t len)
 {
-    uint8_t tmp = 0;
     uint16_t freesize = 0;
-
-    tmp = getSn_SR(sn);
 
     freesize = getSn_TxMAX(sn);
     if (len > freesize)
@@ -57,8 +62,15 @@ int32_t send_lwip(uint8_t sn, uint8_t *buf, uint16_t len)
 
     wiz_send_data(sn, buf, len);
     setSn_CR(sn, Sn_CR_SEND);
+
+    absolute_time_t deadline = make_timeout_time_ms(SEND_WAIT_TIMEOUT_MS);
     while (getSn_CR(sn))
-        ;
+    {
+        if (absolute_time_diff_us(get_absolute_time(), deadline) <= 0)
+        {
+            return -1;
+        }
+    }
 
     while (1)
     {
@@ -74,6 +86,12 @@ int32_t send_lwip(uint8_t sn, uint8_t *buf, uint16_t len)
             setSn_IR(sn, Sn_IR_TIMEOUT);
             // printf("Socket is closed\n");
             //  There was a timeout
+            return -1;
+        }
+        else if (absolute_time_diff_us(get_absolute_time(), deadline) <= 0)
+        {
+            // Neither SENDOK nor TIMEOUT ever came back -- don't spin
+            // forever; report failure so the caller/netif can react.
             return -1;
         }
     }
@@ -115,13 +133,18 @@ int32_t recv_lwip(uint8_t sn, uint8_t *buf, uint16_t len)
 
 err_t netif_output(struct netif *netif, struct pbuf *p)
 {
-    uint32_t send_len = 0;
     uint32_t tot_len = 0;
 
     memset(tx_frame, 0x00, sizeof(tx_frame));
 
     for (struct pbuf *q = p; q != NULL; q = q->next)
     {
+        if (tot_len + q->len > sizeof(tx_frame))
+        {
+            // Would overflow tx_frame -- drop rather than corrupt memory.
+            return ERR_BUF;
+        }
+
         memcpy(tx_frame + tot_len, q->payload, q->len);
 
         tot_len += q->len;
@@ -138,9 +161,13 @@ err_t netif_output(struct netif *netif, struct pbuf *p)
         tot_len = 60;
     }
 
-    uint32_t crc = ethernet_frame_crc(tx_frame, tot_len);
-
-    send_len = send_lwip(0, tx_frame, tot_len);
+    // Note: no software FCS/CRC is computed here -- the W5500 appends its
+    // own frame check sequence in hardware for MACRAW sends.
+    int32_t send_len = send_lwip(0, tx_frame, tot_len);
+    if (send_len < 0)
+    {
+        return ERR_IF;
+    }
 
     return ERR_OK;
 }
@@ -164,27 +191,4 @@ err_t netif_initialize(struct netif *netif)
     SMEMCPY(netif->hwaddr, mac, sizeof(netif->hwaddr));
     netif->hwaddr_len = sizeof(netif->hwaddr);
     return ERR_OK;
-}
-
-static uint32_t ethernet_frame_crc(const uint8_t *data, int length)
-{
-    uint32_t crc = 0xffffffff; /* Initial value. */
-
-    while (--length >= 0)
-    {
-        uint8_t current_octet = *data++;
-
-        for (int bit = 8; --bit >= 0; current_octet >>= 1)
-        {
-            if ((crc ^ current_octet) & 1)
-            {
-                crc >>= 1;
-                crc ^= ethernet_polynomial_le;
-            }
-            else
-                crc >>= 1;
-        }
-    }
-
-    return ~crc;
 }

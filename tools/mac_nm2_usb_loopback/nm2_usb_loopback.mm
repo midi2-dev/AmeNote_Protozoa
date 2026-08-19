@@ -31,6 +31,7 @@
 #include <cstring>
 #include <csignal>
 #include <unistd.h>
+#include <vector>
 
 #include "networkmidi2/NetworkMidiSession.h"
 #include "PosixUdpTransport.h"
@@ -39,6 +40,17 @@ using namespace networkmidi2;
 
 static std::atomic<bool>  gRunning{true};
 static NetworkMidiSession *gSession = nullptr;
+
+// onNetworkUmp() runs synchronously inside session.tick() and, per
+// NetworkMidiSession.h, must not call sendUmp() re-entrantly from there.
+// Queue the echo instead and flush it from main()'s loop after tick()
+// returns -- both run on the same (single) thread, so no locking is
+// needed, just deferral past the end of the tick() call.
+struct PendingEcho {
+    uint32_t words[4];
+    size_t wordCount;
+};
+static std::vector<PendingEcho> gPendingEchoes;
 
 static void handleSigint(int) { gRunning = false; }
 
@@ -49,9 +61,10 @@ static void onNetworkUmp(void *ctx, const uint32_t *words, size_t wordCount) {
     for (size_t i = 0; i < wordCount; i++) printf(" %08X", words[i]);
     printf("\n");
 
-    if (gSession != nullptr) {
-        gSession->sendUmp(words, wordCount);
-    }
+    PendingEcho echo;
+    echo.wordCount = wordCount > 4 ? 4 : wordCount;
+    memcpy(echo.words, words, echo.wordCount * sizeof(uint32_t));
+    gPendingEchoes.push_back(echo);
 }
 
 static void onNetworkStateChange(void *ctx, SessionState newState) {
@@ -114,6 +127,12 @@ int main(int argc, char *argv[]) {
 
     while (gRunning) {
         session.tick();
+
+        for (const auto &echo : gPendingEchoes) {
+            gSession->sendUmp(echo.words, echo.wordCount);
+        }
+        gPendingEchoes.clear();
+
         usleep(1000);
     }
 

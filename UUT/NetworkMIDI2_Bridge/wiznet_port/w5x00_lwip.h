@@ -26,6 +26,14 @@ extern "C" {
 /* LWIP */
 #define ETHERNET_MTU 1500
 
+// Buffer size for a full raw Ethernet frame (14-byte header + up to
+// ETHERNET_MTU bytes of payload), with headroom -- NOT the same thing as
+// ETHERNET_MTU (netif->mtu, an IP-payload-only figure). Any buffer that
+// receives/holds a whole frame off the wire (e.g. tx_frame in
+// w5x00_lwip.c, or a caller's RX buffer passed to recv_lwip()) must be
+// sized to this, not to ETHERNET_MTU alone.
+#define ETHERNET_FRAME_MAX_SIZE 1542
+
 /**
  * ----------------------------------------------------------------------------------------------------
  * Variables
@@ -101,17 +109,6 @@ void netif_status_callback(struct netif *netif);
  *  \return ERR_OK if Network interface initialized
  */
 err_t netif_initialize(struct netif *netif);
-
-/*! \brief ethernet frame cyclic redundancy check
- *  \ingroup w5x00_lwip
- *
- *  Perform cyclic redundancy check on ethernet frame
- *
- *  \param data a pointer to the ethernet frame
- *  \param length the total length of ethernet frame
- *  \return an ethernet frame cyclic redundancy check result value
- */
-static uint32_t ethernet_frame_crc(const uint8_t *data, int length);
 
 #ifdef __cplusplus
 }
