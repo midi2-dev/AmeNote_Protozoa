@@ -8,7 +8,7 @@
  * licensed group will contibute to the firmware so we can cooperatively improve and
  * make consistent the implementations of MIDI 2.0.
  * 
- * COPYRIGHT (c) 2022 AMENOTE INC.
+ * COPYRIGHT (c) 2022, 2026 AMENOTE INC.
  *
  * This Software is subject to the AmeNote ProtoZOA Firmware License terms and conditions
  * outlined in the project README and may or may not become public, open-source at

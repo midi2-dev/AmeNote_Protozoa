@@ -378,4 +378,4 @@ The various configurations and connections of the expansion connector are an adv
 
 
 ##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote, Inc. (2022).
-##### Copyright (c) AmeNote Inc., 2022.
+##### Copyright (c) AmeNote Inc., 2022, 2026.

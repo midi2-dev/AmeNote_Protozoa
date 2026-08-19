@@ -31,5 +31,5 @@ PicoProbe is Copyright 2020 (c) 2020 Raspberry Pi (Trading) Ltd.
 The PicoProbe [license](License.md) is direct from Raspberry Pico SDK repository.
 
 
-##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote Inc., 2022.
-##### Copyright (c) AmeNote Inc., 2022.
+##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote Inc., 2022, 2026.
+##### Copyright (c) AmeNote Inc., 2022, 2026.

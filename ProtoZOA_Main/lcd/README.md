@@ -2,7 +2,7 @@
 
 # ProtoZOA USB MIDI 2.0 Tool
 ## An open project for MIDI 2.0 Standards Prototyping and Development by AmeNote Inc.
-Copyright(C) 2022 - AmeNote Inc.
+Copyright(C) 2022, 2026 - AmeNote Inc.
 
 ## LCD 1.14 Inch Optional Display Module Library
 

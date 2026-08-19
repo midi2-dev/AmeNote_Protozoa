@@ -16,4 +16,4 @@ ProtoZOA and the advancement of MIDI 2.0 it represent would not be possible with
 Contributions are made according to the [Contribution Agreement](https://github.com/midi2-dev/Amenote_Protozoa/blob/main/Contribution.md)
 
 ##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote, Inc. (2022).
-##### Copyright (c) AmeNote Inc., 2022, 2023.
+##### Copyright (c) AmeNote Inc., 2022, 2026.

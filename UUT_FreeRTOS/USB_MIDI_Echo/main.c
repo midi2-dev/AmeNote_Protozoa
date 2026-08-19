@@ -5,7 +5,7 @@
  * 
  * The MIT License (MIT)
  *
- * Copyright (c) 2022 Michael Loh (AmeNote.com)
+ * Copyright (c) 2022, 2026 Michael Loh (AmeNote.com)
  *
  * FreeRTOS V202107.00
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
