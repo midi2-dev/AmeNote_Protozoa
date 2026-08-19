@@ -34,7 +34,7 @@ The License in Section 3 is granted to any organization which:
 
 MIT License
 
-Copyright (c) AmeNote Inc.
+Copyright (c) AmeNote Inc., 2022, 2026.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -57,9 +57,9 @@ SOFTWARE
 
 The following copyright notice and permission notice shall be included in all copies or substantial portions of the Software:
 
-COPYRIGHT 2023 AMENOTE INC.
+COPYRIGHT 2022, 2026 AMENOTE INC.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON- INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
 
 ##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote Inc.
-##### Copyright 2022 AmeNote Inc.
+##### Copyright 2022, 2026 AmeNote Inc.

@@ -9,6 +9,8 @@
 
 AmeNote ProtoZOA Prototyping Tool with Optional Display Module and CME WIDI BLE Module
 
+Latest release: **Version 2.0** -- adds the [NetworkMIDI2 Bridge](UUT/NetworkMIDI2_Bridge) (USB MIDI 2.0 <-> Network MIDI 2.0 over the Wiznet W5500 PoE Ethernet Expansion Module). See [Releases](https://github.com/midi2-dev/AmeNote_Protozoa/releases) for prior versions.
+
 ## Welcome
 
 Welcome to the world of MIDI 2.0 Prototyping. Initially ProtoZOA was concieved as a prototyping tool for the developer to experiment with and develop USB MIDI 2.0 along with other members of the MIDI Association with the coal of creating complete, consistent and industry approved implementations of MIDI 2.0 on USB.
@@ -37,7 +39,8 @@ This git has the following sub directories:
 | ProtoZOA_PicoProbe    | Code and build for the PicoProbe utility from Raspberry configured for use on ProtoZOA development board. Can be loaded onto either Main or UUT Pico. See [User Manual](doc/UserManual) for more information.    |
 | UUT    | Code and build for the UUT (Unit Under Test) Pico on ProtoZOA - the one on connectors.    |
 | UUT_FreeRTOS    | UUT variants built on FreeRTOS (e.g. USB MIDI Echo, general FreeRTOS task examples).    |
-| lib    | Dependencies pulled in as git submodules (CMSIS_5, FreeRTOS-Kernel, ni-midi2, AM_MIDI2.0Lib, tusb_ump).    |
+| lib    | Dependencies pulled in as git submodules (CMSIS_5, FreeRTOS-Kernel, ni-midi2, AM_MIDI2.0Lib, tusb_ump, NetworkMIDI2, RP2040-HAT-LWIP-C).    |
+| tools | Host-side developer tools (e.g. [`mac_nm2_usb_loopback`](tools/mac_nm2_usb_loopback), a macOS NetworkMIDI2 loopback tester). |
 | doc | ProtoZOA support documentation. |
 | CMakeLists.txt | Top-level cmake build file. |
 | CMakePresets.json | CLI/CI/IDE-agnostic configure & build presets (`cmake --preset release`). |
@@ -93,7 +96,7 @@ AmeNote (and others) will be releasing additional expansion accessories for use 
 - Micro-USB to USB A (host) Adapter - see User Manual for more details.
 
 ### License
-The ProtoZOA hardware and associated developed firmware is Copyright (c) AmeNote Inc., 2022.
+The ProtoZOA hardware and associated developed firmware is Copyright (c) AmeNote Inc., 2022, 2026.
 
 AmeNote Inc. desires for whole community involvement and for the group to all benefit from the development and advancement of ProtoZOA and the associated firmware, therefore a very open license agreement exists with the ultimate goal of all firmware resources becoming open source and open hardware reference designs for public use. The decision of open to public will be jointly decided by AmeNote and the MIDI Association.
 
@@ -104,4 +107,4 @@ The reader agrees to the terms of the [ProtoZOA License](License.md) and [Contri
 We wish to thank and acknowledge all contributors to this project. Please review our [Contributors](doc/Contributors.md) document regularly.
 
 ##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote Inc.
-##### Copyright (c) AmeNote Inc., 2022.
+##### Copyright (c) AmeNote Inc., 2022, 2026.

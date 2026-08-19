@@ -5,7 +5,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2022 Michael Loh (AmeNote.com)
+ * Copyright (c) 2022, 2026 Michael Loh (AmeNote.com)
  * Copyright (c) 2023 Franz Detro (native-instruments.com)
  *
  * FreeRTOS V202107.00

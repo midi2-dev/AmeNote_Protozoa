@@ -44,7 +44,7 @@ The best way to get the code is to clone the repository to your local developmen
 
 > git clone git@github.com:midi2-dev/AmeNote_Protozoa.git --recursive
 
-**Note:** this project's submodules (`lib/FreeRTOS-Kernel`, `lib/ni-midi2`, `lib/AM_MIDI2.0Lib`, `lib/tusb_ump`, `lib/CMSIS_5`) are all fetched over SSH (`git@github.com:...`), so you need an SSH key [added to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh) before cloning -- an HTTPS clone of the main repo will still fail to fetch submodules without one.
+**Note:** this project's submodules (`lib/FreeRTOS-Kernel`, `lib/ni-midi2`, `lib/AM_MIDI2.0Lib`, `lib/tusb_ump`, `lib/CMSIS_5`, `lib/NetworkMIDI2`, `lib/RP2040-HAT-LWIP-C`) are all fetched over SSH (`git@github.com:...`), so you need an SSH key [added to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh) before cloning -- an HTTPS clone of the main repo will still fail to fetch submodules without one.
 
 The --recursive command will ensure all submodules are also fetched into your local repository. If you did not fetch repository with the recursive command, you can change directory into your local repository and execute the following commands:
 
@@ -74,4 +74,4 @@ If you discover an issue with existing code bases, be sure to review current Iss
 
 Please use the Issues feature of Git to submit any suggested improvements or additions. Please review any current open issues to see if there is a similar or same issue already posted and either add or agree to that thread.
 
-##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote, Inc. (2022).
+##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote, Inc. (2022, 2026).

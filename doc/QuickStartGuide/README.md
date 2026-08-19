@@ -126,6 +126,6 @@ The ProtoZOA is now ready to be used for Prototyping, testing and development. W
 | 2 | By using this adapter, the Main or UUT Pico can be adapted to being a USB Host. Currently AmeNote does not provide any USB Hosting capabilities but intends to eventually provide binaries (license TBD) to enable hosting of USB MIDI 1.0 or USB MIDI 2.0 Class compliant devices. |
 | 3 | IDE and debugger only needed if you intend to prototype, develop and contribute to ProtoZOA MIDI 2.0 Prototype community. |
 
-##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote Inc., 2022.
-##### Copyright (c) AmeNote Inc., 2022.
+##### AmeNote, AmeNote Logo and ProtoZOA are trademarks of AmeNote Inc., 2022, 2026.
+##### Copyright (c) AmeNote Inc., 2022, 2026.
 

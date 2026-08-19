@@ -17,7 +17,7 @@
  * - implement MODE selection of cap touch
  * - divide functions into libraries to allow for more flexible development on Main Pico.
  * 
- * COPYRIGHT (c) 2022 AMENOTE INC.
+ * COPYRIGHT (c) 2022, 2026 AMENOTE INC.
  *
  * This Software is subject to the AmeNote ProtoZOA Firmware License terms and conditions
  * outlined in the project README and may or may not become public, open-source at
