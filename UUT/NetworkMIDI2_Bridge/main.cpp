@@ -228,12 +228,19 @@ static void wiznet_lwip_init() {
 // project runs lwIP in NO_SYS=1 (no tcpip thread) -- same pattern as the
 // RP2040-HAT-LWIP-C dhcp_dns example this was adapted from.
 static void wiznet_lwip_poll() {
-    uint16_t pack_len = 0;
-    getsockopt(SOCKET_MACRAW, SO_RECVBUF, &pack_len);
-    if (pack_len == 0) return;
+    uint16_t pending = 0;
+    getsockopt(SOCKET_MACRAW, SO_RECVBUF, &pending);
+    if (pending == 0) return;
 
-    static uint8_t packetBuf[ETHERNET_MTU];
-    pack_len = recv_lwip(SOCKET_MACRAW, packetBuf, pack_len);
+    // recv_lwip()'s bounds check compares the incoming frame's declared
+    // length against the `len` we pass here -- it must be the actual
+    // capacity of packetBuf (sizeof(packetBuf)), NOT `pending` (the total
+    // bytes currently queued in the W5500's RX buffer, which can be larger
+    // than a single frame and is unrelated to packetBuf's size). Passing
+    // `pending` here made the bounds check a no-op and let a full-size
+    // Ethernet frame overflow a too-small buffer.
+    static uint8_t packetBuf[ETHERNET_FRAME_MAX_SIZE];
+    uint16_t pack_len = recv_lwip(SOCKET_MACRAW, packetBuf, sizeof(packetBuf));
     if (pack_len == 0) return;
 
     struct pbuf *p = pbuf_alloc(PBUF_RAW, pack_len, PBUF_POOL);
@@ -301,7 +308,20 @@ int main() {
                     // passes straight through to the network session.
                     UMPHandler.processUMP(UMPpacket[i]);
                 }
-                nm2Session->sendUmp(UMPpacket, umpCount);
+
+                // UMP Stream messages (Message Type 0xF -- Endpoint/Function
+                // Block Discovery and their replies) are answered locally
+                // above via midiendpoint()/functionblock(); they are USB<->
+                // host session-management traffic, not MIDI data, and must
+                // not also be relayed onto the NetworkMIDI2 session.
+                uint8_t messageType = (UMPpacket[0] >> 28) & 0xF;
+                if (messageType != 0xF) {
+                    if (!nm2Session->sendUmp(UMPpacket, umpCount)) {
+                        printf("[%llu] NM2 sendUmp dropped %u word(s) "
+                               "(FIFO full or session not established)\n",
+                               time_us_64(), umpCount);
+                    }
+                }
             }
         }
 
