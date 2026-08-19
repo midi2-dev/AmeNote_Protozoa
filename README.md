@@ -72,20 +72,18 @@ This project targets [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico
 3. See [Developer Guide](doc/DeveloperGuide) for more detail.
 
 ## MIDI Association ([www.midi.org](http://www.midi.org))
-ProtoZOA is part of the offering from the MIDI Association towards their mission for corporate members to:
+ProtoZOA was originally developed as part of an offering from the MIDI Association towards their mission for corporate members to:
 - Develop and enhance MIDI to respond to new market needs
 - Create new MIDI 2.0 standards with broad industry participation
 - Ensure the interoperability of MIDI products
 - Protect the term MIDI and MIDI logo markets
 - Promote the use of MIDI technology and products.
 
-Currently all commercial members of the MIDI Association have or can receive a single ProtoZOA. If you are a commercial member and have not received a ProtoZOA, please be sure to contact the MIDI Association at [info@midi.org](mailto:info@midi.org). Note that the MIDI Association has the right to terminate this offering at any time.
+The MIDI Association is no longer distributing ProtoZOA units to commercial members -- that offering has ended. This repository remains available for the community to build, prototype, and develop MIDI 2.0 with.
 
 ## Further ProtoZOA's / Accessories
 
-Current commercial MIDI Association members can obtain additional ProtoZOA Prototyping tools by contacting AmeNote at [info@AmeNote.com](mailto:info@AmeNote.com). Note that the ProtoZOA's are assembled in batches by hand. In response, AmeNote will provide you with more details in response to your inquiry.
-
-Availability for non-commercial MIDI Association members is anticipated to occur by early 2023, coinciding with some or all firmware source becoming publically available.
+To obtain a ProtoZOA Prototyping tool, contact AmeNote at [info@AmeNote.com](mailto:info@AmeNote.com). Note that the ProtoZOA's are assembled in batches by hand. In response, AmeNote will provide you with more details in response to your inquiry.
 
 AmeNote (and others) will be releasing additional expansion accessories for use with ProtoZOA from time to time. Currently in development or externally availabe are:
 - LCD Display Module with joystick and funciton buttons (see User Guide for more info)
