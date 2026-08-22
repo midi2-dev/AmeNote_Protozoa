@@ -36,8 +36,9 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
+#define USB_PID_APP       0x05  // unique per test app -- see UUT/USB_PID_ASSIGNMENTS.md
 #define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) | (USB_PID_APP << 8) )
 
 #define USB_VID   0xCafe  // NOTE: Vendor ID is default from TinyUSB and is not valid to be used commercially
 #define USB_BCD   0x0200
