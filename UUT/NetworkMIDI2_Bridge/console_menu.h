@@ -23,4 +23,19 @@ bool runConfigMenu(BridgeConfig &cfg);
 // and cfg.role is Client. Browses for "_midi2._udp" hosts via `disc`,
 // presents a numbered list, and lets the user pick one (or enter an IP
 // manually). Updates cfg.clientHostIp/clientHostPort and saves to flash.
-void runClientHostSelect(BridgeConfig &cfg, networkmidi2::IDiscovery &disc);
+//
+// `pollNetwork` is called every ~50ms while browsing -- this app runs lwIP
+// with NO_SYS=1 (no tcpip thread), so without pumping the W5500 RX path and
+// lwIP's timers here (normally done by main()'s own loop, which hasn't
+// started yet at this point), no Ethernet frames -- including mDNS
+// responses -- would ever be read off the wire and discovery could never
+// succeed no matter how long the browse window is.
+//
+// `isNetworkReady` (e.g. LwipMdnsDiscovery::isNetifReady) is polled before
+// calling disc.browse(): browse() sends its mDNS query synchronously and
+// without retry, so calling it before DHCP has assigned an address means
+// the one query it gets to send goes out with a bogus 0.0.0.0 source and is
+// silently dropped by real responders -- wait (briefly, still pumping
+// pollNetwork) for a valid address first.
+void runClientHostSelect(BridgeConfig &cfg, networkmidi2::IDiscovery &disc,
+                          void (*pollNetwork)(), bool (*isNetworkReady)());

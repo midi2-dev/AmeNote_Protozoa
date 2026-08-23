@@ -14,6 +14,7 @@ namespace {
 
 constexpr uint32_t kSetupPromptTimeoutMs = 3000;
 constexpr uint32_t kHostBrowseMs         = 4000;
+constexpr uint32_t kNetifReadyTimeoutMs  = 3000;
 constexpr unsigned  kMaxListedHosts      = 8;
 
 // Reads one line (echoed) into buf, up to bufSize-1 chars, terminated by
@@ -138,7 +139,18 @@ bool runConfigMenu(BridgeConfig &cfg) {
     return true;
 }
 
-void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc) {
+void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
+                          void (*pollNetwork)(), bool (*isNetworkReady)()) {
+    // browse() sends its mDNS query once, synchronously, with no retry --
+    // calling it before the netif has a valid IPv4 address (DHCP still in
+    // progress) burns the whole browse window on a query that goes out with
+    // a bogus 0.0.0.0 source and gets silently dropped. Wait briefly for a
+    // valid address first, still pumping the network meanwhile.
+    absolute_time_t readyDeadline = make_timeout_time_ms(kNetifReadyTimeoutMs);
+    while (!isNetworkReady() && absolute_time_diff_us(get_absolute_time(), readyDeadline) > 0) {
+        pollNetwork();
+    }
+
     printf("\r\nSearching for NetworkMIDI2 hosts (_midi2._udp) for %u seconds...\r\n",
            kHostBrowseMs / 1000);
     printf("(Enter at any time to stop early and pick from what's found so far,\r\n"
@@ -152,6 +164,12 @@ void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc) {
 
     absolute_time_t deadline = make_timeout_time_ms(kHostBrowseMs);
     while (absolute_time_diff_us(get_absolute_time(), deadline) > 0) {
+        // Pump the W5500 RX path and lwIP's timers -- main()'s own loop that
+        // normally does this hasn't started yet at this point in boot, and
+        // this app runs lwIP with NO_SYS=1, so without this nothing (DHCP,
+        // mDNS responses, anything) would ever be processed during browse.
+        pollNetwork();
+
         DiscoveredPeer peer;
         while (hostCount < kMaxListedHosts && disc.nextDiscovered(peer)) {
             hosts[hostCount++] = peer;

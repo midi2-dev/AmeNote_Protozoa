@@ -254,6 +254,13 @@ static void wiznet_lwip_poll() {
     }
 }
 
+// Passed to runClientHostSelect() as its network-pump callback -- see the
+// comment on that function in console_menu.h for why it's needed there.
+static void wiznet_lwip_poll_tick() {
+    wiznet_lwip_poll();
+    sys_check_timeouts();
+}
+
 int main() {
     stdio_init_all();
 
@@ -271,7 +278,8 @@ int main() {
     // configured (first boot).
     if (gBridgeConfig.role == BridgeRole::Client &&
         (enteredSetup || gBridgeConfig.clientHostIp[0] == '\0')) {
-        runClientHostSelect(gBridgeConfig, mdnsDisc);
+        runClientHostSelect(gBridgeConfig, mdnsDisc, wiznet_lwip_poll_tick,
+                             LwipMdnsDiscovery::isNetifReady);
     }
 
     // Respond to the USB host's UMP Endpoint/Function Block Discovery

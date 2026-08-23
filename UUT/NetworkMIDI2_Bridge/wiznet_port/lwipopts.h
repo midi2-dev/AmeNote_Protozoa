@@ -41,6 +41,14 @@
 // Enable the DNS-SD browse API (mdns_search_service).
 #define LWIP_MDNS_SEARCH 1
 
+// MEMP_NUM_SYS_TIMEOUT: pool of simultaneous active timeouts. The SDK
+// default (LWIP_NUM_SYS_TIMEOUT_INTERNAL) does not reserve slots for mDNS
+// announce/query retransmissions, which crashes ("sys_timeout: timeout !=
+// NULL, pool MEMP_SYS_TIMEOUT is empty") as soon as mDNS is exercised
+// alongside DHCP/IGMP. Same value and reasoning as lib/NetworkMIDI2/
+// examples/midi_bridge/lwip/lwipopts.h.
+#define MEMP_NUM_SYS_TIMEOUT 20
+
 // disable ACD to avoid build errors
 // http://lwip.100.n7.nabble.com/Build-issue-if-LWIP-DHCP-is-set-to-0-td33280.html
 #define LWIP_DHCP_DOES_ACD_CHECK 0
