@@ -395,7 +395,7 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
             {
                     (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
                     "AmeNote",                     // 1: Manufacturer
-                    "ProtoZOA",                    // 2: Product
+                    "USBMidiEcho",                 // 2: Product
                     serialId,                      // 3: Serials, should use chip ID
                     "ProtoZOA CDC",                // 4: CDC Interface
                     "ProtoZOA MIDI",               // 5: MIDI Interface

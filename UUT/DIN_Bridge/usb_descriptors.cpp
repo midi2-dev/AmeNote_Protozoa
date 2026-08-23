@@ -173,7 +173,7 @@ uint8_t const gtbLengths[] = {44};
 uint8_t const epInterface[] = {1};
 uint8_t const *group_descr[] = {gtb0};
 char const* string_desc_arr [] = {
-        "", "ACME Enterprises", "ACME Synth", "abcd1234", "Monosynth", "IN EXT", "OUT EXT", "ACMESynth"
+        "", "ACME Enterprises", "USBMidiDinBridge", "abcd1234", "Monosynth", "IN EXT", "OUT EXT", "ACMESynth"
 };
 uint8_t const string_desc_arr_length = 7;
 

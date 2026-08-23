@@ -172,7 +172,7 @@ uint8_t const gtbLengths[] = {44};
 uint8_t const epInterface[] = {1};
 uint8_t const *group_descr[] = {gtb0};
 char const* string_desc_arr [] = {
-        "", "AmeNote Inc.", "ProtoZOA NetworkMIDI2 Bridge", "abcd1234", "Network Bridge", "IN EXT", "OUT EXT", "NM2 Bridge"
+        "", "AmeNote Inc.", "USBMidiNetworkBridge", "abcd1234", "Network Bridge", "IN EXT", "OUT EXT", "NM2 Bridge"
 };
 uint8_t const string_desc_arr_length = 7;
 
