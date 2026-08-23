@@ -6,6 +6,8 @@
 // session standing in for the DIN UART.
 //
 
+#include "hardware/watchdog.h"
+#include "pico/stdio.h"
 #include "pico/stdio/driver.h"
 #include "pico/time.h"
 #include "pico/unique_id.h"
@@ -55,6 +57,11 @@ static BridgeConfig gBridgeConfig;
 
 #define NM2_SESSION_PORT 5004 // Network MIDI 2.0's recommended default port
 static uint16_t NM2_CLIENT_LOCAL_PORT = 5005;
+
+// Pressing this key at any time while the bridge is running reboots into
+// the setup menu, so missing the boot-time setup window (or wanting to
+// change something) doesn't require a physical power cycle.
+constexpr int kReconfigureKey = 0x1B; // ESC
 
 // Minimal UMP Endpoint Discovery identity, matching DIN_Bridge -- AmeNote
 // does not have a registered SysEx manufacturer ID, so this uses the
@@ -298,9 +305,17 @@ int main() {
         nm2Session->beginHost(NM2_SESSION_PORT, &mdnsDisc);
     }
 
+    printf("Bridge running. Press ESC at any time to reboot into setup.\n");
+
     // ------- Loop: pump lwIP/W5500, USB, and the NM2 session -------
     while (true) {
         tud_task();
+
+        if (getchar_timeout_us(0) == kReconfigureKey) {
+            printf("ESC pressed -- rebooting into setup...\n");
+            watchdog_reboot(0, 0, 0);
+            while (true) tight_loop_contents(); // wait for the reset to take effect
+        }
 
         wiznet_lwip_poll();
         sys_check_timeouts();

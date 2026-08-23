@@ -38,15 +38,14 @@ void readLine(char *buf, size_t bufSize) {
     }
 }
 
-// Reads a line, keeping `fallback` if the user just presses Enter.
+// Reads a line, keeping `fallback` if the user just presses Enter. `fallback`
+// may alias `buf` (e.g. "keep the current value") -- only copy when it doesn't.
 void readLineWithDefault(char *buf, size_t bufSize, const char *fallback) {
     char entered[64] = {};
     readLine(entered, sizeof(entered));
-    if (entered[0] == '\0') {
-        strncpy(buf, fallback, bufSize - 1);
-        buf[bufSize - 1] = '\0';
-    } else {
-        strncpy(buf, entered, bufSize - 1);
+    const char *src = entered[0] == '\0' ? fallback : entered;
+    if (src != buf) {
+        strncpy(buf, src, bufSize - 1);
         buf[bufSize - 1] = '\0';
     }
 }
@@ -92,7 +91,8 @@ void printCurrentConfig(const BridgeConfig &cfg) {
 
 bool runConfigMenu(BridgeConfig &cfg) {
     printCurrentConfig(cfg);
-    printf("\r\nPress any key within %u seconds to enter setup...\r\n",
+    printf("\r\nPress any key within %u seconds to enter setup "
+           "(or press ESC any time later while the bridge is running)...\r\n",
            kSetupPromptTimeoutMs / 1000);
 
     absolute_time_t deadline = make_timeout_time_ms(kSetupPromptTimeoutMs);
