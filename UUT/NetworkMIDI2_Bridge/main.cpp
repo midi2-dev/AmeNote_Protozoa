@@ -6,6 +6,8 @@
 // session standing in for the DIN UART.
 //
 
+#include "hardware/watchdog.h"
+#include "pico/stdio.h"
 #include "pico/stdio/driver.h"
 #include "pico/time.h"
 #include "pico/unique_id.h"
@@ -27,6 +29,13 @@
 #include "networkmidi2/NetworkMidiSession.h"
 #include "networkmidi2/Types.h"
 #include "LwipUdpTransport.h"
+#include "LwipMdnsDiscovery.h"
+
+// Runtime configuration (role, name, network settings) + boot-time setup
+// menu -- see issue #17. Replaces the compile-time #defines this file used
+// to have for NM2_USE_DHCP / NM2_STATIC_* / NM2_BRIDGE_ROLE_CLIENT.
+#include "bridge_config.h"
+#include "console_menu.h"
 
 // USB MIDI 2.0 (tusb_ump) + UMP Endpoint/Function Block Discovery, same as
 // DIN_Bridge.
@@ -40,26 +49,19 @@ using namespace networkmidi2;
 // ---------------------------------------------------------------------------
 // Network configuration
 // ---------------------------------------------------------------------------
-#define NM2_USE_DHCP 1 // 0 = use the NM2_STATIC_* addresses below instead
-
-#if !NM2_USE_DHCP
-static uint8_t NM2_STATIC_IP[4]      = {192, 168, 1, 200};
-static uint8_t NM2_STATIC_SUBNET[4]  = {255, 255, 255, 0};
-static uint8_t NM2_STATIC_GATEWAY[4] = {192, 168, 1, 1};
-static uint8_t NM2_STATIC_DNS[4]     = {192, 168, 1, 1};
-#endif
+// Role, device name, and DHCP-vs-static network settings are runtime
+// configuration now (see bridge_config.h/console_menu.h, issue #17) rather
+// than compile-time #defines -- gBridgeConfig is loaded from flash (or
+// defaulted) and optionally edited via the boot-time setup menu in main().
+static BridgeConfig gBridgeConfig;
 
 #define NM2_SESSION_PORT 5004 // Network MIDI 2.0's recommended default port
+static uint16_t NM2_CLIENT_LOCAL_PORT = 5005;
 
-#ifdef NM2_BRIDGE_ROLE_CLIENT
-// CLIENT role: fixed host to connect to. Edit for your setup, or switch
-// back to -DNM2_BRIDGE_ROLE=HOST (the CMake default) to listen instead.
-#define NM2_CLIENT_HOST_IP0 192
-#define NM2_CLIENT_HOST_IP1 168
-#define NM2_CLIENT_HOST_IP2 1
-#define NM2_CLIENT_HOST_IP3 100
-#define NM2_CLIENT_LOCAL_PORT 5005
-#endif
+// Pressing this key at any time while the bridge is running reboots into
+// the setup menu, so missing the boot-time setup window (or wanting to
+// change something) doesn't require a physical power cycle.
+constexpr int kReconfigureKey = 0x1B; // ESC
 
 // Minimal UMP Endpoint Discovery identity, matching DIN_Bridge -- AmeNote
 // does not have a registered SysEx manufacturer ID, so this uses the
@@ -69,7 +71,6 @@ static uint8_t NM2_STATIC_DNS[4]     = {192, 168, 1, 1};
 #define DEVICE_FAMID 0x00, 0x00
 #define DEVICE_MODELID 0x00, 0x00
 #define DEVICE_VERSIONID 0, 1, 0, 0
-#define DEVICE_MIDIENDPOINTNAME "AmeNote ProtoZOA NetworkMIDI2 Bridge"
 
 // Defined in wiznet_port/w5x00_lwip.c.
 extern uint8_t mac[6];
@@ -115,10 +116,10 @@ void midiendpoint(uint8_t majVer, uint8_t minVer, uint8_t filter) {
     }
 
     if (filter & 0x4) {
-        int nameLength = strlen(DEVICE_MIDIENDPOINTNAME);
+        int nameLength = strlen(gBridgeConfig.name);
         for (uint8_t offset = 0; offset < nameLength; offset += 14) {
             std::array<uint32_t, 4> UMP = UMPMessage::mtFMidiEndpointTextNotify(
-                    MIDIENDPOINT_NAME_NOTIFICATION, offset, (uint8_t *) DEVICE_MIDIENDPOINTNAME, nameLength);
+                    MIDIENDPOINT_NAME_NOTIFICATION, offset, (uint8_t *) gBridgeConfig.name, nameLength);
             tud_ump_write_hton(0, UMP.data(), 4);
         }
     }
@@ -168,7 +169,7 @@ static void onNetworkStateChange(void *ctx, SessionState newState) {
 // ---------------------------------------------------------------------------
 // Wiznet W5500 + lwIP netif bring-up
 // ---------------------------------------------------------------------------
-static void wiznet_lwip_init() {
+static void wiznet_lwip_init(const BridgeConfig &cfg) {
     wizchip_spi_initialize();
     wizchip_cris_initialize();
 
@@ -181,29 +182,29 @@ static void wiznet_lwip_init() {
 
     wiz_NetInfo netInfo = {};
     memcpy(netInfo.mac, mac, 6);
-#if NM2_USE_DHCP
-    netInfo.dhcp = NETINFO_DHCP;
-#else
-    netInfo.dhcp = NETINFO_STATIC;
-    memcpy(netInfo.ip, NM2_STATIC_IP, 4);
-    memcpy(netInfo.sn, NM2_STATIC_SUBNET, 4);
-    memcpy(netInfo.gw, NM2_STATIC_GATEWAY, 4);
-    memcpy(netInfo.dns, NM2_STATIC_DNS, 4);
-#endif
+    if (cfg.useDhcp) {
+        netInfo.dhcp = NETINFO_DHCP;
+    } else {
+        netInfo.dhcp = NETINFO_STATIC;
+        parseDottedIp(cfg.staticIp, netInfo.ip);
+        parseDottedIp(cfg.staticNetmask, netInfo.sn);
+        parseDottedIp(cfg.staticGateway, netInfo.gw);
+        parseDottedIp(cfg.staticDns, netInfo.dns);
+    }
     network_initialize(netInfo);
     print_network_information(netInfo);
 
     lwip_init();
 
-#if NM2_USE_DHCP
-    netif_add(&g_netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY, NULL, netif_initialize, netif_input);
-#else
-    ip4_addr_t ip, sn, gw;
-    IP4_ADDR(&ip, NM2_STATIC_IP[0], NM2_STATIC_IP[1], NM2_STATIC_IP[2], NM2_STATIC_IP[3]);
-    IP4_ADDR(&sn, NM2_STATIC_SUBNET[0], NM2_STATIC_SUBNET[1], NM2_STATIC_SUBNET[2], NM2_STATIC_SUBNET[3]);
-    IP4_ADDR(&gw, NM2_STATIC_GATEWAY[0], NM2_STATIC_GATEWAY[1], NM2_STATIC_GATEWAY[2], NM2_STATIC_GATEWAY[3]);
-    netif_add(&g_netif, &ip, &sn, &gw, NULL, netif_initialize, netif_input);
-#endif
+    if (cfg.useDhcp) {
+        netif_add(&g_netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY, NULL, netif_initialize, netif_input);
+    } else {
+        ip4_addr_t ip, sn, gw;
+        IP4_ADDR(&ip, netInfo.ip[0], netInfo.ip[1], netInfo.ip[2], netInfo.ip[3]);
+        IP4_ADDR(&sn, netInfo.sn[0], netInfo.sn[1], netInfo.sn[2], netInfo.sn[3]);
+        IP4_ADDR(&gw, netInfo.gw[0], netInfo.gw[1], netInfo.gw[2], netInfo.gw[3]);
+        netif_add(&g_netif, &ip, &sn, &gw, NULL, netif_initialize, netif_input);
+    }
     g_netif.name[0] = 'e';
     g_netif.name[1] = '0';
 
@@ -218,9 +219,9 @@ static void wiznet_lwip_init() {
     netif_set_link_up(&g_netif);
     netif_set_up(&g_netif);
 
-#if NM2_USE_DHCP
-    dhcp_start(&g_netif);
-#endif
+    if (cfg.useDhcp) {
+        dhcp_start(&g_netif);
+    }
 }
 
 // Pump any pending Ethernet frames from the W5500 up into lwIP. Must be
@@ -253,12 +254,33 @@ static void wiznet_lwip_poll() {
     }
 }
 
+// Passed to runClientHostSelect() as its network-pump callback -- see the
+// comment on that function in console_menu.h for why it's needed there.
+static void wiznet_lwip_poll_tick() {
+    wiznet_lwip_poll();
+    sys_check_timeouts();
+}
+
 int main() {
     stdio_init_all();
 
     printf("Starting AmeNote ProtoZOA NetworkMIDI2 Bridge\n");
 
-    wiznet_lwip_init();
+    loadBridgeConfig(gBridgeConfig);
+    bool enteredSetup = runConfigMenu(gBridgeConfig);
+
+    wiznet_lwip_init(gBridgeConfig);
+
+    static LwipMdnsDiscovery mdnsDisc;
+
+    // Client role: pick a host now that the network is up, either because
+    // the user just walked the setup menu or because no host has ever been
+    // configured (first boot).
+    if (gBridgeConfig.role == BridgeRole::Client &&
+        (enteredSetup || gBridgeConfig.clientHostIp[0] == '\0')) {
+        runClientHostSelect(gBridgeConfig, mdnsDisc, wiznet_lwip_poll_tick,
+                             LwipMdnsDiscovery::isNetifReady);
+    }
 
     // Respond to the USB host's UMP Endpoint/Function Block Discovery
     // requests, matching DIN_Bridge.
@@ -268,7 +290,7 @@ int main() {
     tusb_init();
 
     EndpointInfo info;
-    info.setName("ProtoZOA NM2 Bridge");
+    info.setName(gBridgeConfig.name);
     info.setProductId("com.amenote.protozoa.nm2-bridge");
 
     NetworkMidiSession::Callbacks cb;
@@ -279,19 +301,29 @@ int main() {
     static NetworkMidiSession session(nm2Transport, info, cb);
     nm2Session = &session;
 
-#ifdef NM2_BRIDGE_ROLE_CLIENT
-    UdpEndpoint hostEp;
-    hostEp.ipv4 = (uint32_t(NM2_CLIENT_HOST_IP0) << 24) | (uint32_t(NM2_CLIENT_HOST_IP1) << 16) |
-                  (uint32_t(NM2_CLIENT_HOST_IP2) << 8) | uint32_t(NM2_CLIENT_HOST_IP3);
-    hostEp.port = NM2_SESSION_PORT;
-    nm2Session->beginClient(hostEp, NM2_CLIENT_LOCAL_PORT);
-#else
-    nm2Session->beginHost(NM2_SESSION_PORT);
-#endif
+    if (gBridgeConfig.role == BridgeRole::Client) {
+        uint8_t hostOctets[4];
+        parseDottedIp(gBridgeConfig.clientHostIp, hostOctets);
+        UdpEndpoint hostEp;
+        hostEp.ipv4 = (uint32_t(hostOctets[0]) << 24) | (uint32_t(hostOctets[1]) << 16) |
+                      (uint32_t(hostOctets[2]) << 8) | uint32_t(hostOctets[3]);
+        hostEp.port = gBridgeConfig.clientHostPort;
+        nm2Session->beginClient(hostEp, NM2_CLIENT_LOCAL_PORT);
+    } else {
+        nm2Session->beginHost(NM2_SESSION_PORT, &mdnsDisc);
+    }
+
+    printf("Bridge running. Press ESC at any time to reboot into setup.\n");
 
     // ------- Loop: pump lwIP/W5500, USB, and the NM2 session -------
     while (true) {
         tud_task();
+
+        if (getchar_timeout_us(0) == kReconfigureKey) {
+            printf("ESC pressed -- rebooting into setup...\n");
+            watchdog_reboot(0, 0, 0);
+            while (true) tight_loop_contents(); // wait for the reset to take effect
+        }
 
         wiznet_lwip_poll();
         sys_check_timeouts();

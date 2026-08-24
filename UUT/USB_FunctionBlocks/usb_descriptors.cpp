@@ -36,8 +36,9 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
+#define USB_PID_APP       0x03  // unique per test app -- see UUT/USB_PID_ASSIGNMENTS.md
 #define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) | (USB_PID_APP << 8) )
 
 #define USB_VID   0xCafe  // NOTE: Vendor ID is default from TinyUSB and is not valid to be used commercially
 #define USB_BCD   0x0200
@@ -172,7 +173,7 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
             {
                     (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
                     "ACME Enterprises",                     // 1: Manufacturer
-                    "MSynthI",                    // 2: Product
+                    "USBMidiFunctionBlocks",      // 2: Product
                     serialId,                      // 3: Serials, should use chip ID
                     "ProtoZOA CDC",                // 4: CDC Interface
                     "MSynthI",               // 5: MIDI Interface

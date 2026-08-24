@@ -36,8 +36,9 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
+#define USB_PID_APP       0x02  // unique per test app -- see UUT/USB_PID_ASSIGNMENTS.md
 #define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) | (USB_PID_APP << 8) )
 
 #define USB_VID   0xCafe  // NOTE: Vendor ID is default from TinyUSB and is not valid to be used commercially
 #define USB_BCD   0x0200
@@ -171,7 +172,7 @@ uint8_t const gtbLengths[] = {44};
 uint8_t const epInterface[] = {1};
 uint8_t const *group_descr[] = {gtb0};
 char const* string_desc_arr [] = {
-        "", "AmeNote Inc.", "ProtoZOA NetworkMIDI2 Bridge", "abcd1234", "Network Bridge", "IN EXT", "OUT EXT", "NM2 Bridge"
+        "", "AmeNote Inc.", "USBMidiNetworkBridge", "abcd1234", "Network Bridge", "IN EXT", "OUT EXT", "NM2 Bridge"
 };
 uint8_t const string_desc_arr_length = 7;
 

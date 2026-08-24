@@ -81,9 +81,11 @@ target_include_directories(pico_lwip INTERFACE ${WIZNET_PORT_DIR})
 # ---------------------------------------------------------------------------
 set(NM2_DIR ${CMAKE_CURRENT_LIST_DIR}/../../lib/NetworkMIDI2)
 
-# HOST: listen for a NetworkMIDI2 client. CLIENT: connect out to a fixed
-# host (see NM2_CLIENT_HOST_IP/NM2_CLIENT_HOST_PORT in main.cpp).
-set(NM2_BRIDGE_ROLE "HOST" CACHE STRING "NetworkMIDI2 session role: HOST or CLIENT")
+# Role, device name, and network settings are runtime-configurable via the
+# boot-time serial setup menu (see bridge_config.h/console_menu.h, issue
+# #17) and persisted to flash. NM2_BRIDGE_ROLE only seeds the first-boot
+# default -- once a config has been saved to flash, that's what's used.
+set(NM2_BRIDGE_ROLE "CLIENT" CACHE STRING "NetworkMIDI2 session first-boot default role: HOST or CLIENT")
 set_property(CACHE NM2_BRIDGE_ROLE PROPERTY STRINGS HOST CLIENT)
 
 # ---------------------------------------------------------------------------
@@ -98,6 +100,8 @@ file(GLOB common_SRC CONFIGURE_DEPENDS
 add_executable(UUT_NetworkMIDI2_Bridge
         main.cpp
         usb_descriptors.cpp
+        bridge_config.cpp
+        console_menu.cpp
         ${common_SRC}
         )
 
@@ -113,8 +117,11 @@ target_include_directories(UUT_NetworkMIDI2_Bridge PUBLIC
         )
 
 target_compile_definitions(UUT_NetworkMIDI2_Bridge PRIVATE
-        NM2_BRIDGE_ROLE_${NM2_BRIDGE_ROLE}=1
+        NM2_HAVE_LWIP_MDNS=1
         )
+if(NM2_BRIDGE_ROLE STREQUAL "HOST")
+    target_compile_definitions(UUT_NetworkMIDI2_Bridge PRIVATE NM2_BRIDGE_DEFAULT_ROLE_HOST=1)
+endif()
 
 # Temporary suppression of compile warning for MIDI2_CPP (matches DIN_Bridge)
 target_compile_options(UUT_NetworkMIDI2_Bridge PRIVATE -Wno-narrowing -Wno-unused-variable)
@@ -127,10 +134,12 @@ target_link_libraries(UUT_NetworkMIDI2_Bridge
         hardware_spi
         hardware_dma
         hardware_clocks
+        hardware_flash
         libmidi2
         NM2BRIDGE_WIZNET_PORT
         pico_lwip
         pico_lwip_nosys
+        pico_lwip_mdns
         ${NM2_DIR}/lib/pico/rp2040/libnetworkmidi2.a
         ${NM2_DIR}/lib/pico/rp2040/libnm2_transport_lwip.a
         )
