@@ -17,13 +17,31 @@ constexpr uint32_t kHostBrowseMs         = 4000;
 constexpr uint32_t kNetifReadyTimeoutMs  = 3000;
 constexpr unsigned  kMaxListedHosts      = 8;
 
+// Set by setConsolePump(); run inside every wait loop below so the USB
+// device stack keeps being serviced while we sit at a prompt. See the
+// comment on setConsolePump() in console_menu.h.
+void (*gPump)() = nullptr;
+
+void pumpTick() {
+    if (gPump) gPump();
+}
+
 // Reads one line (echoed) into buf, up to bufSize-1 chars, terminated by
-// CR or LF. Backspace/DEL deletes the previous character. Blocking.
+// CR or LF. Backspace/DEL deletes the previous character.
+//
+// Waits for input by polling rather than blocking in getchar(), so the wait
+// keeps pumpTick() running -- USB enumeration is serviced from there, and a
+// prompt that parked in getchar() would stall it (issue #19). This still
+// waits indefinitely, so only call it on paths where somebody is known to
+// be at the console; unattended paths must not prompt at all.
 void readLine(char *buf, size_t bufSize) {
     size_t len = 0;
     buf[0] = '\0';
     while (true) {
-        int c = getchar();
+        pumpTick();
+
+        int c = getchar_timeout_us(0);
+        if (c == PICO_ERROR_TIMEOUT) continue;
         if (c == '\r' || c == '\n') {
             printf("\r\n");
             break;
@@ -90,6 +108,10 @@ void printCurrentConfig(const BridgeConfig &cfg) {
 
 } // namespace
 
+void setConsolePump(void (*pump)()) {
+    gPump = pump;
+}
+
 bool runConfigMenu(BridgeConfig &cfg) {
     printCurrentConfig(cfg);
     printf("\r\nPress any key within %u seconds to enter setup "
@@ -98,6 +120,7 @@ bool runConfigMenu(BridgeConfig &cfg) {
 
     absolute_time_t deadline = make_timeout_time_ms(kSetupPromptTimeoutMs);
     while (absolute_time_diff_us(get_absolute_time(), deadline) > 0) {
+        pumpTick();
         if (getchar_timeout_us(0) != PICO_ERROR_TIMEOUT) break;
     }
     // Drain anything queued (including the key that woke us) before we
@@ -139,8 +162,9 @@ bool runConfigMenu(BridgeConfig &cfg) {
     return true;
 }
 
-void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
-                          void (*pollNetwork)(), bool (*isNetworkReady)()) {
+bool runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
+                          void (*pollNetwork)(), bool (*isNetworkReady)(),
+                          bool interactive) {
     // browse() sends its mDNS query once, synchronously, with no retry --
     // calling it before the netif has a valid IPv4 address (DHCP still in
     // progress) burns the whole browse window on a query that goes out with
@@ -149,6 +173,7 @@ void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
     absolute_time_t readyDeadline = make_timeout_time_ms(kNetifReadyTimeoutMs);
     while (!isNetworkReady() && absolute_time_diff_us(get_absolute_time(), readyDeadline) > 0) {
         pollNetwork();
+        pumpTick();
     }
 
     printf("\r\nSearching for NetworkMIDI2 hosts (_midi2._udp) for %u seconds...\r\n",
@@ -161,6 +186,7 @@ void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
     DiscoveredPeer hosts[kMaxListedHosts];
     unsigned       hostCount = 0;
     bool           manual    = false;
+    bool           sawInput  = interactive; // did anyone answer the console?
 
     absolute_time_t deadline = make_timeout_time_ms(kHostBrowseMs);
     while (absolute_time_diff_us(get_absolute_time(), deadline) > 0) {
@@ -169,6 +195,7 @@ void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
         // this app runs lwIP with NO_SYS=1, so without this nothing (DHCP,
         // mDNS responses, anything) would ever be processed during browse.
         pollNetwork();
+        pumpTick();
 
         DiscoveredPeer peer;
         while (hostCount < kMaxListedHosts && disc.nextDiscovered(peer)) {
@@ -179,18 +206,32 @@ void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
                    peer.endpoint.port);
         }
 
-        int c = getchar_timeout_us(50 * 1000);
+        // Poll rather than waiting 50ms per iteration: the loop body has to
+        // get back to pumpTick() promptly or USB enumeration stalls here.
+        int c = getchar_timeout_us(0);
         if (c == '\r' || c == '\n') {
+            sawInput = true;
             break;
         }
         if (c == 'm' || c == 'M') {
-            manual = true;
+            sawInput = true;
+            manual    = true;
             break;
         }
     }
     disc.stopBrowse();
 
     if (!manual && hostCount == 0) {
+        // Nothing on the wire and nobody typing: we are on an unattended
+        // boot (issue #19 -- a board plugged into a PC's USB port with no
+        // serial console and, often, no Ethernet). Prompting here would
+        // block in getchar() forever and main() would never get to run the
+        // bridge at all. Give up instead; ESC re-enters setup later.
+        if (!sawInput) {
+            printf("No hosts found and no console input -- continuing without a host.\r\n"
+                    "Press ESC once running to enter setup and choose one.\r\n");
+            return false;
+        }
         printf("No hosts found -- enter one manually.\r\n");
         manual = true;
     }
@@ -204,6 +245,14 @@ void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
         if (portAns[0]) cfg.clientHostPort = (uint16_t) atoi(portAns);
     } else {
         unsigned choice = 0;
+        if (!sawInput) {
+            // Unattended boot that did find hosts. Nobody is there to pick
+            // one, and prompting would block in readLine() forever -- which
+            // is what left the board with no USB at all in issue #19. Take
+            // the first host found; ESC re-enters setup to change it.
+            choice = 1;
+            printf("No console input -- defaulting to host [1] (%s).\r\n", hosts[0].epName);
+        }
         while (choice < 1 || choice > hostCount) {
             printf("Select host [1-%u]: ", hostCount);
             char ans[8] = {};
@@ -219,4 +268,5 @@ void runClientHostSelect(BridgeConfig &cfg, IDiscovery &disc,
 
     saveBridgeConfig(cfg);
     printf("Will connect to %s:%u\r\n", cfg.clientHostIp, cfg.clientHostPort);
+    return cfg.clientHostIp[0] != '\0';
 }

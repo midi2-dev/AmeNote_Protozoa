@@ -169,13 +169,24 @@ static void onNetworkStateChange(void *ctx, SessionState newState) {
 // ---------------------------------------------------------------------------
 // Wiznet W5500 + lwIP netif bring-up
 // ---------------------------------------------------------------------------
-static void wiznet_lwip_init(const BridgeConfig &cfg) {
+// False until wiznet_lwip_init() has brought a netif up; guards every path
+// that would otherwise touch the W5500 or lwIP on a board where the chip
+// never answered.
+static bool gNetworkUp = false;
+
+// Returns false if the W5500 never answered, in which case no netif was
+// brought up and the caller should skip anything network-dependent. USB is
+// already enumerated by this point and stays working either way (issue #19).
+static bool wiznet_lwip_init(const BridgeConfig &cfg) {
     wizchip_spi_initialize();
     wizchip_cris_initialize();
 
     wizchip_reset();
     wizchip_initialize();
-    wizchip_check();
+    if (!wizchip_check_ok()) {
+        printf("W5500 not responding -- continuing without Ethernet.\n");
+        return false;
+    }
 
     setSHAR(mac);
     ctlwizchip(CW_RESET_PHY, 0);
@@ -222,6 +233,8 @@ static void wiznet_lwip_init(const BridgeConfig &cfg) {
     if (cfg.useDhcp) {
         dhcp_start(&g_netif);
     }
+    gNetworkUp = true;
+    return true;
 }
 
 // Pump any pending Ethernet frames from the W5500 up into lwIP. Must be
@@ -229,6 +242,8 @@ static void wiznet_lwip_init(const BridgeConfig &cfg) {
 // project runs lwIP in NO_SYS=1 (no tcpip thread) -- same pattern as the
 // RP2040-HAT-LWIP-C dhcp_dns example this was adapted from.
 static void wiznet_lwip_poll() {
+    if (!gNetworkUp) return; // no W5500, no MACRAW socket to read from
+
     uint16_t pending = 0;
     getsockopt(SOCKET_MACRAW, SO_RECVBUF, &pending);
     if (pending == 0) return;
@@ -261,26 +276,34 @@ static void wiznet_lwip_poll_tick() {
     sys_check_timeouts();
 }
 
+// Passed to setConsolePump(): keeps the USB device stack serviced while the
+// boot-time menus wait for input. tud_task() is what answers the host's
+// enumeration control transfers, so it has to keep running even while we
+// sit at a prompt -- otherwise enumeration stalls right there (issue #19).
+static void usb_task_tick() {
+    tud_task();
+}
+
 int main() {
     stdio_init_all();
 
     printf("Starting AmeNote ProtoZOA NetworkMIDI2 Bridge\n");
 
-    loadBridgeConfig(gBridgeConfig);
-    bool enteredSetup = runConfigMenu(gBridgeConfig);
-
-    wiznet_lwip_init(gBridgeConfig);
-
-    static LwipMdnsDiscovery mdnsDisc;
-
-    // Client role: pick a host now that the network is up, either because
-    // the user just walked the setup menu or because no host has ever been
-    // configured (first boot).
-    if (gBridgeConfig.role == BridgeRole::Client &&
-        (enteredSetup || gBridgeConfig.clientHostIp[0] == '\0')) {
-        runClientHostSelect(gBridgeConfig, mdnsDisc, wiznet_lwip_poll_tick,
-                             LwipMdnsDiscovery::isNetifReady);
-    }
+    // Issue #19: bring USB up FIRST, before the setup menu, the W5500 and
+    // host discovery. The D+ pull-up is only asserted by tusb_init(), so
+    // until it runs the USB host does not even see a device attach -- and
+    // everything between here and there can stall for seconds or, with no
+    // serial console attached, forever. That is why the bridge showed up as
+    // nothing at all in Windows Device Manager while working on a macOS
+    // bench that always had a console and an Ethernet host present.
+    //
+    // Doing this first also keeps the board inside the 100mA that USB
+    // guarantees before SET_CONFIGURATION: enumeration now completes before
+    // wiznet_lwip_init() powers up the Ethernet PHY.
+    //
+    // Everything that waits from here on must keep calling tud_task(), or
+    // the host's enumeration control transfers go unanswered -- see
+    // setConsolePump() below and the pumping in console_menu.cpp.
 
     // Respond to the USB host's UMP Endpoint/Function Block Discovery
     // requests, matching DIN_Bridge.
@@ -288,6 +311,24 @@ int main() {
     UMPHandler.setFunctionBlock(functionblock);
 
     tusb_init();
+    setConsolePump(usb_task_tick);
+
+    loadBridgeConfig(gBridgeConfig);
+    bool enteredSetup = runConfigMenu(gBridgeConfig);
+
+    bool networkUp = wiznet_lwip_init(gBridgeConfig);
+
+    static LwipMdnsDiscovery mdnsDisc;
+
+    // Client role: pick a host now that the network is up, either because
+    // the user just walked the setup menu or because no host has ever been
+    // configured (first boot).
+    bool haveClientHost = gBridgeConfig.clientHostIp[0] != '\0';
+    if (networkUp && gBridgeConfig.role == BridgeRole::Client &&
+        (enteredSetup || !haveClientHost)) {
+        haveClientHost = runClientHostSelect(gBridgeConfig, mdnsDisc, wiznet_lwip_poll_tick,
+                                              LwipMdnsDiscovery::isNetifReady, enteredSetup);
+    }
 
     EndpointInfo info;
     info.setName(gBridgeConfig.name);
@@ -301,7 +342,22 @@ int main() {
     static NetworkMidiSession session(nm2Transport, info, cb);
     nm2Session = &session;
 
-    if (gBridgeConfig.role == BridgeRole::Client) {
+    // False when we never got as far as beginClient()/beginHost() -- the
+    // session object exists but has no transport bound, so the main loop
+    // must not tick() or send into it.
+    bool sessionStarted = true;
+
+    if (!networkUp) {
+        printf("No Ethernet -- running as a USB MIDI device only.\n");
+        sessionStarted = false;
+    } else if (gBridgeConfig.role == BridgeRole::Client && !haveClientHost) {
+        // Unattended boot with nothing discovered -- stay up as a USB MIDI
+        // device (already enumerated) and wait for the user to configure a
+        // host rather than dialling 0.0.0.0. See runClientHostSelect().
+        printf("Client role with no host configured -- not starting a session.\n"
+               "Press ESC to enter setup and choose one.\n");
+        sessionStarted = false;
+    } else if (gBridgeConfig.role == BridgeRole::Client) {
         uint8_t hostOctets[4];
         parseDottedIp(gBridgeConfig.clientHostIp, hostOctets);
         UdpEndpoint hostEp;
@@ -347,7 +403,7 @@ int main() {
                 // host session-management traffic, not MIDI data, and must
                 // not also be relayed onto the NetworkMIDI2 session.
                 uint8_t messageType = (UMPpacket[0] >> 28) & 0xF;
-                if (messageType != 0xF) {
+                if (messageType != 0xF && sessionStarted) {
                     if (!nm2Session->sendUmp(UMPpacket, umpCount)) {
                         printf("[%llu] NM2 sendUmp dropped %u word(s) "
                                "(FIFO full or session not established)\n",
@@ -358,7 +414,7 @@ int main() {
         }
 
         // Network -> USB happens inside tick() via onNetworkUmp() above.
-        nm2Session->tick();
+        if (sessionStarted) nm2Session->tick();
     }
     return 0;
 }

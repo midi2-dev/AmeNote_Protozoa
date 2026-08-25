@@ -7,6 +7,8 @@
 #ifndef _W5X00_SPI_H_
 #define _W5X00_SPI_H_
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -197,6 +199,18 @@ void wizchip_initialize(void);
  *  \param none
  */
 void wizchip_check(void);
+
+/*! \brief Check chip version, without hanging on failure
+ *  \ingroup w5x00_spi
+ *
+ *  Same version check as wizchip_check(), but returns false instead of
+ *  parking in an infinite loop when the chip does not answer. Callers that
+ *  have other work to keep doing -- USB, in this app's case -- must use
+ *  this one; see the comment in the implementation and issue #19.
+ *
+ *  \return true if the W5x00 reported its expected version register.
+ */
+bool wizchip_check_ok(void);
 
 /* Network */
 /*! \brief Initialize network

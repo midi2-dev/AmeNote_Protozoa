@@ -230,6 +230,32 @@ void wizchip_initialize(void)
     printf(" PHY link is still down after 2s -- continuing without it.\n");
 }
 
+bool wizchip_check_ok(void)
+{
+    /* Non-fatal form of wizchip_check() below. That one parks in while(1)
+     * when the version register does not read back, which on this app is a
+     * hang before tusb_init() -- the board then never asserts its USB
+     * pull-up and shows up as nothing at all on the host (issue #19). A
+     * dead or absent W5500 should cost us Ethernet, not USB MIDI, so
+     * report the failure and let the caller carry on. */
+#if (_WIZCHIP_ == W5100S)
+    uint8_t ver = getVER();
+    if (ver != 0x51)
+    {
+        printf(" ACCESS ERR : VERSION != 0x51, read value = 0x%02x\n", ver);
+        return false;
+    }
+#elif (_WIZCHIP_ == W5500)
+    uint8_t ver = getVERSIONR();
+    if (ver != 0x04)
+    {
+        printf(" ACCESS ERR : VERSION != 0x04, read value = 0x%02x\n", ver);
+        return false;
+    }
+#endif
+    return true;
+}
+
 void wizchip_check(void)
 {
 #if (_WIZCHIP_ == W5100S)
