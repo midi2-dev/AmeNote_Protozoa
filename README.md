@@ -39,7 +39,7 @@ This git has the following sub directories:
 | ProtoZOA_PicoProbe    | Code and build for the PicoProbe utility from Raspberry configured for use on ProtoZOA development board. Can be loaded onto either Main or UUT Pico. See [User Manual](doc/UserManual) for more information.    |
 | UUT    | Code and build for the UUT (Unit Under Test) Pico on ProtoZOA - the one on connectors.    |
 | UUT_FreeRTOS    | UUT variants built on FreeRTOS (e.g. USB MIDI Echo, general FreeRTOS task examples).    |
-| lib    | Dependencies pulled in as git submodules (CMSIS_5, FreeRTOS-Kernel, ni-midi2, AM_MIDI2.0Lib, tusb_ump, NetworkMIDI2, RP2040-HAT-LWIP-C).    |
+| lib    | Dependencies pulled in as git submodules (CMSIS_5, FreeRTOS-Kernel, ni-midi2, AM_MIDI2.0Lib, tusb_ump, NetworkMIDI2), plus `ioLibrary_Driver` (Wiznet's W5500 driver, vendored rather than submoduled -- see `lib/ioLibrary_Driver/VENDORED.md`).    |
 | tools | Host-side developer tools (e.g. [`mac_nm2_usb_loopback`](tools/mac_nm2_usb_loopback), a macOS NetworkMIDI2 loopback tester). |
 | doc | ProtoZOA support documentation. |
 | CMakeLists.txt | Top-level cmake build file. |

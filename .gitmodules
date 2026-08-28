@@ -16,6 +16,3 @@
 [submodule "lib/NetworkMIDI2"]
 	path = lib/NetworkMIDI2
 	url = git@github.com:midi2-dev/NetworkMIDI2.git
-[submodule "lib/RP2040-HAT-LWIP-C"]
-	path = lib/RP2040-HAT-LWIP-C
-	url = git@github.com:Wiznet/RP2040-HAT-LWIP-C.git

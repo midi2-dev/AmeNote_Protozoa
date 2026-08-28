@@ -6,12 +6,15 @@
 #
 
 # ---------------------------------------------------------------------------
-# Wiznet ioLibrary_Driver (from the lib/RP2040-HAT-LWIP-C submodule) --
-# assumes a W5500 expansion board. If yours is a W5100S board instead,
-# change WIZNET_CHIP below and the W5500/ subdirectory references.
+# Wiznet ioLibrary_Driver (vendored at lib/ioLibrary_Driver -- see its
+# VENDORED.md; previously pulled in transitively via the lib/RP2040-HAT-LWIP-C
+# submodule, dropped for carrying an unused, multi-gigabyte nested pico-sdk
+# submodule of its own, see midi2-dev/AmeNote_Protozoa#23) -- assumes a W5500
+# expansion board. If yours is a W5100S board instead, change WIZNET_CHIP
+# below and the W5500/ subdirectory references.
 # ---------------------------------------------------------------------------
 set(WIZNET_CHIP W5500)
-set(WIZNET_DIR ${CMAKE_CURRENT_LIST_DIR}/../../lib/RP2040-HAT-LWIP-C/libraries/ioLibrary_Driver)
+set(WIZNET_DIR ${CMAKE_CURRENT_LIST_DIR}/../../lib/ioLibrary_Driver)
 set(WIZNET_PORT_DIR ${CMAKE_CURRENT_LIST_DIR}/wiznet_port)
 
 # PROTOZOA (default): ProtoZOA UUT J13 expansion pins (see wiznet_port/w5x00_spi.h).
