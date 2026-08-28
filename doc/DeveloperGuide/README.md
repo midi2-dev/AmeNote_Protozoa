@@ -42,15 +42,21 @@ The ProtoZOA code base is C / C++. There are many resources available online if 
 ### Getting the Code
 The best way to get the code is to clone the repository to your local development machine. With git installed, you can go to your Pico directory (same place as pico-sdk directory) and exeucte the following command:
 
-> git clone git@github.com:midi2-dev/AmeNote_Protozoa.git --recursive
+> git clone git@github.com:midi2-dev/AmeNote_Protozoa.git
 
 **Note:** this project's submodules (`lib/FreeRTOS-Kernel`, `lib/ni-midi2`, `lib/AM_MIDI2.0Lib`, `lib/tusb_ump`, `lib/CMSIS_5`, `lib/NetworkMIDI2`, `lib/RP2040-HAT-LWIP-C`) are all fetched over SSH (`git@github.com:...`), so you need an SSH key [added to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh) before cloning -- an HTTPS clone of the main repo will still fail to fetch submodules without one.
 
-The --recursive command will ensure all submodules are also fetched into your local repository. If you did not fetch repository with the recursive command, you can change directory into your local repository and execute the following commands:
+**Don't use `--recursive`/`git submodule update --recursive`.** `lib/RP2040-HAT-LWIP-C` carries its own nested `libraries/pico-sdk` submodule that this project doesn't use (we build against a separately installed SDK via `PICO_SDK_PATH`) -- a blanket recursive update pulls that in anyway, an extra multi-gigabyte, unnecessary download, and there's no submodule config that suppresses it (nested `update = none` only affects a later non-`--init` `update`, not the first recursive `--init`). Instead, initialize submodules selectively:
 
-> git submodule init
+> git submodule update --init
 
-> git submodule update --recursive
+> git submodule update --init --recursive -- lib/FreeRTOS-Kernel
+
+> cd lib/RP2040-HAT-LWIP-C && git submodule update --init libraries/ioLibrary_Driver && cd ../..
+
+The first command fetches all seven top-level submodules (non-recursively). `lib/FreeRTOS-Kernel` has its own nested submodules (partner/community-supported ports) that ARE needed, hence the second command. The third fetches only `RP2040-HAT-LWIP-C`'s driver library, explicitly skipping `libraries/pico-sdk`.
+
+If you've already run a blanket `--recursive` clone/update and want to reclaim the disk space: `git submodule deinit lib/RP2040-HAT-LWIP-C/libraries/pico-sdk`.
 
 `lib/CMSIS_5` is only used for the CMSIS-DAP debug-probe firmware (`ProtoZOA_Main` and `ProtoZOA_PicoProbe` pull in `CMSIS/DAP/Firmware/{Source,Include}` and `CMSIS/Core/Include` directly) -- it's pinned to upstream tag `5.9.0`, not the full CMSIS_5 feature set.
 
