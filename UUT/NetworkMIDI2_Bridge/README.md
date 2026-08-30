@@ -42,9 +42,11 @@ for `W5100S/w5100s.c`.
 
 - `lib/NetworkMIDI2` — AmeNote's Network MIDI 2.0 session library (binary
   distribution: headers + prebuilt static libs for `rp2040`).
-- `lib/RP2040-HAT-LWIP-C` — WIZnet's official ioLibrary_Driver + lwIP port
-  for the W5500/W5100S on RP2040. Only `libraries/ioLibrary_Driver` (the
-  chip driver) is used from it directly; the small "port" glue files
-  (`w5x00_spi.*`, `w5x00_lwip.*`, `lwipopts.h`) are vendored and customized
-  in `wiznet_port/` per WIZnet's own documented workflow of copying and
+- `lib/ioLibrary_Driver` — WIZnet's chip driver for the W5500/W5100S on
+  RP2040 (just the `Ethernet/` subset actually used here), vendored (a
+  plain copy, not a submodule) from WIZnet's `RP2040-HAT-LWIP-C` repo's
+  `libraries/ioLibrary_Driver` -- see `lib/ioLibrary_Driver/VENDORED.md`
+  for provenance. The small "port" glue files (`w5x00_spi.*`,
+  `w5x00_lwip.*`, `lwipopts.h`) are separately vendored and customized in
+  `wiznet_port/` per WIZnet's own documented workflow of copying and
   editing those files per board.
