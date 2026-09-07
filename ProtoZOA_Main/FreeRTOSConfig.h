@@ -44,6 +44,7 @@
 #define configUSE_PREEMPTION                    1
 #define configUSE_TICKLESS_IDLE                 0
 #define configUSE_IDLE_HOOK                     0
+#define configUSE_PASSIVE_IDLE_HOOK            0 // SMP-only: idle hook on cores not running the tick
 #define configUSE_TICK_HOOK                     1
 #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES                    32
@@ -102,9 +103,25 @@
 */
 
 /* SMP port only */
+// configNUMBER_OF_CORES is the name the FreeRTOS-Kernel SMP port and RP2040
+// port actually check (see FreeRTOS.h:96, portmacro.h). configNUM_CORES is
+// an older name from a pre-merge SMP branch that this vendored kernel no
+// longer recognizes -- kept below because main.c still references it in a
+// dead #if branch, and because pico-sdk's pico_async_context_freertos
+// component also gates SMP behaviour on configNUM_CORES specifically (not
+// currently linked into this repo, so not an active bug, but don't delete
+// this macro on the assumption that it's unused -- check both call sites
+// first). Without configNUMBER_OF_CORES defined, it silently defaulted to 1
+// (FreeRTOS.h:95-96), so this build has been running single-core the whole
+// time despite intending dual-core (multicore_launch_core1 call in main.c,
+// "on both cores" printf, etc.)
+#define configNUMBER_OF_CORES                   2
 #define configNUM_CORES                         2
 #define configTICK_CORE                         0
 #define configRUN_MULTIPLE_PRIORITIES           0
+#define configUSE_CORE_AFFINITY                 1 // required by pico_flash's
+                                                    //   PICO_FLASH_SAFE_EXECUTE_SUPPORT_FREERTOS_SMP
+                                                    //   once configNUMBER_OF_CORES > 1
 
 /* RP2040 specific */
 #define configSUPPORT_PICO_SYNC_INTEROP         1
